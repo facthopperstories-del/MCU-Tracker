@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#06090c">
+<title>The Sacred Timeline — MCU Tracker</title>
+<style>
+  :root{
+    /* ===== refined Loki / multiverse palette (deeper, cinematic) ===== */
+    --bg:#06090c; --bg2:#080d11; --bg3:#05080b;
+    --panel:rgba(14,20,22,.55); --panel-2:rgba(18,26,28,.62);
+    --stroke:rgba(140,230,200,.08); --stroke-2:rgba(140,230,200,.14);
+    --green:#1fd99b; --green-hi:#6ff0c6; --green-soft:#16a87a; --green-deep:#0c5e46;
+    --nexus:#5ff0c4;                    /* reserved: the currently-watching point */
+    --teal:#27b8b0; --cyan:#3fc8e6; --cyan-soft:#1d6f86;
+    --violet:#9a6bff; --violet-soft:#6a4fd0; --magenta:#cf63c8;
+    --red:#e63950; --red-soft:#8a2230;  /* subtle, Defenders era only */
+    --gold:#e8bd6b;                     /* tiny accent: planned/queued */
+    --cream:#e9ede9; --cream-dim:#93a09a; --cream-faint:#646d68;
+    --dim:#4f5963; --line:#15202a; --ink:#04130d;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;
+    --ease:cubic-bezier(.4,0,.2,1);
+    --ease-out:cubic-bezier(.16,1,.3,1);
+    --amb:rgba(31,217,155,.06);         /* ambient mood tint, shifts gently per era */
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans); color:var(--cream); background:var(--bg);
+    min-height:100vh; line-height:1.5; overflow-x:hidden;
+    padding:env(safe-area-inset-top) 0 calc(64px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+
+  /* ===== ambient (kept minimal) ===== */
+  #stars{position:fixed; inset:0; z-index:-3; pointer-events:none}
+  #glow{position:fixed; inset:-14% 0 -10%; z-index:-4; pointer-events:none; will-change:transform;
+    background:
+      radial-gradient(880px 520px at 78% -8%, rgba(31,217,155,.10), transparent 62%),
+      radial-gradient(720px 620px at -10% 20%, rgba(154,107,255,.06), transparent 58%),
+      linear-gradient(180deg,var(--bg),var(--bg2) 60%,var(--bg3));}
+  #mood-tint{position:fixed; inset:0; z-index:-3; pointer-events:none; opacity:.7;
+    background-color:var(--amb); transition:background-color 1.4s ease;
+    -webkit-mask:radial-gradient(75% 60% at 72% 24%, #000, transparent 76%);
+            mask:radial-gradient(75% 60% at 72% 24%, #000, transparent 76%);}
+
+  .wrap{max-width:760px; margin:0 auto; padding:40px 22px 0; position:relative; z-index:1}
+
+  /* ===== sticky mini HUD ===== */
+  #hud{position:fixed; top:0; left:0; right:0; z-index:50; transform:translateY(-110%);
+    transition:transform .45s var(--ease-out), opacity .35s ease; opacity:0;
+    padding:env(safe-area-inset-top) 0 0; pointer-events:none}
+  #hud.show{transform:translateY(0); opacity:1; pointer-events:auto}
+  .hud-bar{max-width:760px; margin:0 auto; display:flex; align-items:center; gap:14px; width:100%;
+    padding:11px 22px; background:rgba(6,11,12,.8); backdrop-filter:blur(20px) saturate(1.2);
+    -webkit-backdrop-filter:blur(20px) saturate(1.2); border:0; cursor:pointer;
+    border-bottom:1px solid var(--stroke)}
+  .hud-pct{font-family:var(--mono); font-weight:700; font-size:15px; color:var(--green);
+    letter-spacing:.02em; min-width:44px; text-align:left}
+  .hud-thread{flex:1; height:4px; border-radius:99px; background:#0d1614; overflow:hidden; min-width:40px}
+  .hud-thread i{display:block; height:100%; width:0; border-radius:99px;
+    background:linear-gradient(90deg,var(--green-deep),var(--green)); transition:width .8s var(--ease)}
+  .hud-now{font-family:var(--mono); font-size:10.5px; letter-spacing:.04em; color:var(--cream-dim);
+    text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:44%; text-align:right}
+  .hud-now b{color:var(--nexus); font-weight:600}
+  @media(max-width:560px){ .hud-now{display:none} }
+
+  /* ===== hero ===== */
+  header{position:relative}
+  .hero-threads{position:absolute; inset:-24px -30px auto -30px; height:200px; z-index:0; pointer-events:none; opacity:.32}
+  .hero-threads svg{width:100%; height:100%}
+  .eyebrow{position:relative; z-index:2; font-family:var(--mono); font-size:11px; letter-spacing:.34em; text-transform:uppercase;
+    color:var(--green-soft); display:flex; align-items:center; gap:11px}
+  .eyebrow::before{content:""; width:28px; height:1px; background:linear-gradient(90deg,transparent,var(--green-soft))}
+  h1{
+    position:relative; z-index:2;
+    font-family:var(--mono); font-weight:700; text-transform:uppercase;
+    letter-spacing:.06em; font-size:clamp(32px,8vw,54px); margin:.34em 0 .2em; line-height:1;
+    background:linear-gradient(108deg,#eafff7 0%,var(--green) 40%,var(--teal) 70%,var(--violet-soft) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sub{position:relative; z-index:2; font-family:var(--mono); font-size:12px; color:var(--cream-dim); letter-spacing:.02em; max-width:58ch; line-height:1.7}
+
+  /* ===== dashboard ===== */
+  .dashboard{
+    position:relative; z-index:2; margin-top:26px;
+    border:1px solid var(--stroke); border-radius:20px;
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    backdrop-filter:blur(20px) saturate(1.15); -webkit-backdrop-filter:blur(20px) saturate(1.15);
+    overflow:hidden; padding:26px 26px 28px;
+    box-shadow:0 30px 70px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .rline{display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--cream-dim)}
+  .rline b{color:var(--green); font-weight:700}
+  .rline .live{display:inline-flex; align-items:center; gap:7px}
+  .rline .live::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--green);
+    box-shadow:0 0 8px var(--green); animation:beat 2.6s ease-in-out infinite}
+  @keyframes beat{0%,100%{opacity:.55}50%{opacity:1}}
+
+  .integrity{margin-top:22px; display:flex; align-items:flex-end; gap:16px}
+  .integrity .big{font-family:var(--mono); font-weight:700; font-size:clamp(46px,13vw,62px); line-height:.8;
+    color:var(--green); letter-spacing:-.01em; text-shadow:0 0 30px rgba(31,217,155,.28)}
+  .integrity .lab{font-family:var(--mono); font-size:11px; letter-spacing:.2em; color:var(--cream-dim);
+    text-transform:uppercase; padding-bottom:9px; line-height:1.45}
+
+  .thread-meter{position:relative; height:8px; border-radius:99px; background:#0c1513; overflow:hidden;
+    margin-top:18px; box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
+  .thread-fill{position:absolute; inset:0 100% 0 0; border-radius:99px;
+    background:linear-gradient(90deg,var(--green-deep),var(--green) 80%,var(--green-hi));
+    box-shadow:0 0 14px rgba(31,217,155,.4); transition:right 1s var(--ease)}
+  .rline.sub-line{margin-top:18px}
+
+  /* ===== now / hero card ===== */
+  .now-card{position:relative; z-index:2; margin-top:18px; width:100%; text-align:left; cursor:pointer; color:inherit; font:inherit;
+    border:1px solid var(--stroke-2); border-radius:20px; overflow:hidden; padding:22px 24px; display:block;
+    background:linear-gradient(135deg, rgba(31,217,155,.08), rgba(12,18,18,.4) 64%);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    box-shadow:0 22px 56px rgba(0,0,0,.42);
+    transition:transform .4s var(--ease), border-color .4s ease, box-shadow .4s ease}
+  .now-card::after{content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:linear-gradient(180deg,var(--nexus),var(--green)); box-shadow:0 0 18px rgba(95,240,196,.6)}
+  .now-card:hover{transform:translateY(-2px); border-color:rgba(95,240,196,.34); box-shadow:0 28px 64px rgba(0,0,0,.5)}
+  .now-card:active{transform:translateY(0)}
+  .now-card:focus-visible{outline:2px solid var(--nexus); outline-offset:3px}
+  .nc-label{font-family:var(--mono); font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+    color:var(--nexus); display:flex; align-items:center; gap:9px}
+  .nc-label .orb{width:8px; height:8px; border-radius:50%; background:var(--nexus);
+    box-shadow:0 0 0 0 rgba(95,240,196,.55); animation:halo 2.6s ease-out infinite}
+  @keyframes halo{0%{box-shadow:0 0 0 0 rgba(95,240,196,.5)}70%,100%{box-shadow:0 0 0 11px rgba(95,240,196,0)}}
+  .nc-title{display:block; font-family:var(--mono); font-weight:700; font-size:clamp(19px,5vw,25px);
+    color:#f1fff8; letter-spacing:.01em; margin:11px 0 6px; line-height:1.18; padding-right:118px}
+  .nc-meta{display:block; font-family:var(--mono); font-size:11px; color:var(--cream-dim); letter-spacing:.04em; line-height:1.6}
+  .nc-meta em{color:var(--green-soft); font-style:normal}
+  .nc-go{position:absolute; right:24px; top:50%; transform:translateY(-50%); font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--nexus); opacity:.5; transition:.3s}
+  .now-card:hover .nc-go{opacity:1; transform:translateY(-50%) translateX(3px)}
+  @media(max-width:520px){ .nc-go{display:none} .nc-title{padding-right:0} }
+  .now-card.complete{border-color:rgba(31,217,155,.3)}
+
+  /* ===== controls ===== */
+  .controls{position:relative; z-index:2; display:flex; gap:9px; flex-wrap:wrap; margin:26px 0 4px; align-items:center}
+  .seg{display:inline-flex; border:1px solid var(--line); border-radius:99px; overflow:hidden;
+    background:rgba(120,255,220,.02); padding:3px}
+  .seg button{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    background:transparent; color:var(--cream-dim); border:0; padding:9px 14px; cursor:pointer; min-height:38px;
+    border-radius:99px; transition:.25s var(--ease)}
+  .seg button:hover{color:var(--cream)}
+  .seg button[aria-pressed="true"]{background:rgba(31,217,155,.14); color:var(--green)}
+  .util{margin-left:auto; display:flex; gap:9px; flex-wrap:wrap}
+  .util button{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    background:transparent; color:var(--cream-dim); border:1px solid var(--line); border-radius:11px;
+    padding:9px 14px; cursor:pointer; min-height:38px; transition:.25s var(--ease)}
+  .util button:hover{color:var(--green); border-color:var(--green-deep); background:rgba(31,217,155,.04)}
+
+  /* ===== legend ===== */
+  .legend{position:relative; z-index:2; display:flex; flex-wrap:wrap; gap:8px 18px; margin:18px 0 4px; font-family:var(--mono);
+    font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--cream-dim)}
+  .legend span{display:inline-flex; align-items:center; gap:8px}
+  .dot{width:10px; height:10px; border-radius:50%; flex:none; border:1.5px solid}
+  .d-watched{background:var(--green); border-color:var(--green)}
+  .d-watching{background:var(--nexus); border-color:var(--nexus); box-shadow:0 0 10px rgba(95,240,196,.7)}
+  .d-unwatched{background:#0e1620; border-color:var(--dim)}
+  .d-planned{background:transparent; border-color:var(--gold)}
+  .d-optional{background:transparent; border-color:var(--teal); border-style:dashed}
+  .d-future{background:transparent; border-color:var(--violet); border-style:dotted}
+  .hint{position:relative; z-index:2; font-family:var(--mono); font-size:10.5px; color:var(--green-deep); letter-spacing:.06em;
+    margin-top:6px; text-transform:uppercase; display:flex; align-items:center; gap:7px}
+  .hint::before{content:"›"; color:var(--green); font-size:13px}
+
+  /* ============================================================
+     ERA / CHAPTER
+       Layout stays identical across eras. Each era differs only by
+       a mood accent + a floating poster-shard behind the timeline.
+     ============================================================ */
+  .era{position:relative; margin-top:64px; isolation:isolate;
+       --accent:var(--green); --accent-2:var(--cyan)}
+  .era-head,.list{position:relative; z-index:2}
+  .era-head{display:flex; align-items:center; gap:13px; padding-bottom:14px;
+    border-bottom:1px solid var(--line); margin-bottom:10px}
+  .era-num{font-family:var(--mono); font-size:11px; color:var(--accent); letter-spacing:.18em; opacity:.85}
+  .era-name{font-family:var(--mono); text-transform:uppercase; letter-spacing:.12em; font-size:13px; color:var(--cream)}
+  .era-count{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--cream-faint); letter-spacing:.08em}
+  .chapter-badge{font-family:var(--mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--nexus);
+    border:1px solid rgba(95,240,196,.4); border-radius:99px; padding:4px 11px; margin-left:6px;
+    display:inline-flex; align-items:center; gap:7px; background:rgba(95,240,196,.06)}
+  .chapter-badge::before{content:""; width:5px; height:5px; border-radius:50%; background:var(--nexus); box-shadow:0 0 7px var(--nexus)}
+  .stamp{font-family:var(--mono); font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--green-soft);
+    border:1px solid var(--green-deep); border-radius:99px; padding:4px 10px; margin-left:6px; opacity:.85}
+
+  /* ===== floating poster-shard art (behind content) =====
+     To use your own image: set image:"assets/your-file.jpg" in ERAS.
+     With an image, the CSS placeholder art hides automatically. */
+  .era-art{position:absolute; z-index:0; top:-18px; right:-44px; width:248px; height:330px;
+    pointer-events:none; opacity:.55; will-change:transform}
+  .era-art::before{content:""; position:absolute; inset:14px 30px 30px 14px; border-radius:14px;
+    border:1px solid var(--stroke); transform:rotate(-9deg); opacity:.5}  /* faint stacked panel behind */
+  .shard{position:absolute; inset:0; border-radius:16px; overflow:hidden; transform:rotate(-5deg);
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+    background:linear-gradient(150deg, var(--p1,#123a2f), var(--p2,#081a14));
+    -webkit-mask:linear-gradient(255deg, #000 32%, transparent 80%);
+            mask:linear-gradient(255deg, #000 32%, transparent 80%)}
+  .shard::before{content:""; position:absolute; inset:0;       /* light shaft */
+    background:linear-gradient(125deg, transparent 30%, var(--shaft,rgba(255,255,255,.12)) 50%, transparent 62%); opacity:.9}
+  .shard::after{content:""; position:absolute; inset:0;        /* vignette for depth */
+    background:radial-gradient(120% 90% at 70% 18%, transparent 40%, rgba(3,6,9,.7))}
+  .shard .motif{position:absolute; inset:0; color:var(--motif,rgba(31,217,155,.4)); display:block}
+  .shard .motif svg{position:absolute; left:0; bottom:0; width:100%; height:88%}
+  .era-art.has-img .shard{background-size:cover; background-position:center; opacity:1}
+  .era-art.has-img .shard::before,.era-art.has-img .motif{display:none}
+
+  /* mood palettes (deep duotones — never neon) */
+  .mood-archive    {--accent:var(--green);  --accent-2:var(--gold);   --amb-c:rgba(31,217,155,.06);
+                    --p1:#123a2f; --p2:#081a14; --motif:rgba(31,217,155,.42); --shaft:rgba(232,189,107,.14)}
+  .mood-cosmic     {--accent:var(--teal);   --accent-2:var(--violet); --amb-c:rgba(39,184,176,.06);
+                    --p1:#103040; --p2:#0a1322; --motif:rgba(63,200,230,.40); --shaft:rgba(154,107,255,.14)}
+  .mood-hellskitchen{--accent:var(--green); --accent-2:var(--red);    --amb-c:rgba(230,57,80,.05);
+                    --p1:#2a0e13; --p2:#0a0607; --motif:rgba(230,57,80,.34); --shaft:rgba(230,57,80,.16)}
+  .mood-multiverse {--accent:var(--violet); --accent-2:var(--cyan);   --amb-c:rgba(154,107,255,.07);
+                    --p1:#221041; --p2:#0c0a1d; --motif:rgba(154,107,255,.40); --shaft:rgba(63,200,230,.14)}
+  .mood-void       {--accent:var(--violet); --accent-2:var(--cyan);   --amb-c:rgba(120,90,255,.06);
+                    --p1:#191240; --p2:#090a1b; --motif:rgba(126,96,255,.42); --shaft:rgba(63,200,230,.14)}
+
+  /* ===== ACTIVE CHAPTER (holds the currently-watching item) ===== */
+  .era.active::before{content:""; position:absolute; z-index:0; top:-34px; left:-12px; right:-12px; height:240px;
+    background:radial-gradient(58% 70% at 28% 16%, rgba(95,240,196,.10), transparent 72%); pointer-events:none}
+
+  /* ===== timeline thread ===== */
+  .list{margin:0; padding:6px 0 0; list-style:none}
+  .list::before{content:""; position:absolute; left:13px; top:0; bottom:20px; width:2px; border-radius:2px;
+    background:linear-gradient(180deg, transparent, var(--green) 14%, var(--green) 86%, transparent);
+    opacity:.32}
+  .era.active .list::before{background:linear-gradient(180deg, transparent, var(--nexus) 12%, var(--nexus) 88%, transparent); opacity:.5}
+  .era.fut .list::before{background:linear-gradient(180deg, transparent, var(--violet) 16%, var(--cyan) 90%, transparent); opacity:.42}
+
+  /* ===== items ===== */
+  .item{position:relative; display:flex; align-items:center; gap:15px; width:100%;
+    background:transparent; border:0; text-align:left; cursor:pointer; color:inherit; font:inherit;
+    padding:13px 12px 13px 0; border-radius:12px; min-height:54px;
+    transition:transform .35s var(--ease), background .3s ease}
+  .item:hover{background:rgba(140,230,200,.045); transform:translateX(3px)}
+  .item:active{transform:translateX(1px)}
+  .item:focus-visible{outline:2px solid var(--green); outline-offset:3px}
+
+  .reveal{opacity:0; transform:translateY(14px)}
+  .reveal.in{opacity:1; transform:none; transition:opacity .7s var(--ease-out) var(--d,0s), transform .7s var(--ease-out) var(--d,0s)}
+
+  .node{position:relative; width:28px; height:28px; flex:none; border-radius:50%; display:grid; place-items:center; z-index:1;
+    background:radial-gradient(circle at 36% 32%, #0d1714, #060b0a); border:2px solid var(--dim); transition:.35s var(--ease)}
+  .node i{width:8px; height:8px; border-radius:50%; background:transparent; transition:.3s}
+  .node::after{content:""; position:absolute; inset:-5px; border-radius:50%; border:2px solid var(--green); opacity:0; transform:scale(.6); pointer-events:none}
+  .node.ignite::after{animation:ring .8s ease-out}
+  @keyframes ring{0%{opacity:.9; transform:scale(.5)}100%{opacity:0; transform:scale(2.2)}}
+
+  .title{flex:1; min-width:0; font-size:15.5px; color:var(--cream); letter-spacing:.003em; transition:color .25s; font-weight:450}
+  .title.flare{animation:flare .8s ease-out}
+  @keyframes flare{0%{color:#fff; text-shadow:0 0 16px rgba(95,240,196,.8)}100%{text-shadow:none}}
+  .note{display:block; font-family:var(--mono); font-size:10.5px; color:var(--green-deep); letter-spacing:.02em;
+    margin-top:4px; text-transform:uppercase; line-height:1.45}
+  .era.fut .note{color:var(--violet-soft)}
+
+  .pill{font-family:var(--mono); font-size:9px; letter-spacing:.12em; text-transform:uppercase; padding:5px 10px;
+    border-radius:99px; flex:none; color:var(--cream-faint); transition:.25s}
+  .tag{font-family:var(--mono); font-size:9px; letter-spacing:.12em; text-transform:uppercase; padding:4px 9px; border-radius:99px; flex:none}
+  .tag-here{color:var(--nexus); background:rgba(95,240,196,.12); border:1px solid rgba(95,240,196,.4)}
+  .tag-next{color:var(--green); background:rgba(31,217,155,.08); border:1px solid var(--green-deep)}
+
+  /* status styles — most are quiet; brightness reserved for watched/watching */
+  .s-watched .node{border-color:var(--green); background:radial-gradient(circle at 36% 32%,#0c3a2b,#060b0a)}
+  .s-watched .node::before{content:"✓"; position:absolute; font-size:12px; color:var(--ink); font-weight:900; line-height:1}
+  .s-watched .node i{display:none}
+  .s-watched .pill{color:var(--green-soft)}
+  .s-watched .title{color:#cfe9df}
+
+  .s-watching{background:linear-gradient(90deg, rgba(95,240,196,.10), transparent 60%); border-radius:12px}
+  .s-watching::before{content:""; position:absolute; left:0; top:8px; bottom:8px; width:2px; border-radius:2px;
+    background:var(--nexus); box-shadow:0 0 12px rgba(95,240,196,.7)}
+  .s-watching .node{border-color:var(--nexus); box-shadow:0 0 16px rgba(95,240,196,.5); animation:pulse 2.6s ease-in-out infinite}
+  .s-watching .node i{background:var(--nexus); width:9px; height:9px}
+  .s-watching .title{color:#f1fff8; font-weight:600}
+  .s-watching .pill{color:var(--nexus)}
+  @keyframes pulse{0%,100%{box-shadow:0 0 12px rgba(95,240,196,.4)}50%{box-shadow:0 0 22px rgba(95,240,196,.8)}}
+
+  .s-unwatched .title{color:#94a09a}
+  .s-unwatched .pill{color:var(--dim)}
+
+  .s-planned .node{border-color:var(--gold)} .s-planned .node i{background:var(--gold)}
+  .s-planned .title{color:#d8e0db} .s-planned .pill{color:var(--gold)}
+  .s-planned .note{color:#9a8344}
+
+  .s-optional{opacity:.82}
+  .s-optional .node{border-color:var(--teal); border-style:dashed}
+  .s-optional .title{color:#8a958f} .s-optional .pill{color:var(--teal)}
+
+  .s-future .node{border-color:var(--violet); border-style:dotted}
+  .s-future .node i{background:var(--violet)}
+  .s-future .title{color:#b9adde} .s-future .pill{color:var(--violet)}
+
+  .item.sealed{animation:seal .9s var(--ease-out)}
+  @keyframes seal{0%{box-shadow:0 0 0 0 rgba(31,217,155,.35)}100%{box-shadow:0 0 0 0 rgba(31,217,155,0)}}
+
+  /* ===== mobile: poster-shard becomes a subtle watermark ===== */
+  @media(max-width:720px){
+    .era-art{top:-26px; right:0; left:0; width:100%; height:210px; opacity:.2}
+    .era-art::before{display:none}
+    .shard{transform:none; box-shadow:none; left:50%; right:auto; width:300px; margin-left:-150px;
+      -webkit-mask:radial-gradient(82% 92% at 50% 22%, #000, transparent 76%);
+              mask:radial-gradient(82% 92% at 50% 22%, #000, transparent 76%)}
+    .shard::after{background:radial-gradient(120% 100% at 50% 18%, transparent 36%, rgba(6,9,12,.82))}
+  }
+
+  /* ===== boot splash ===== */
+  #boot{position:fixed; inset:0; z-index:100; background:radial-gradient(circle at 50% 42%,#081210,#04060a);
+    display:flex; align-items:center; justify-content:center; transition:opacity .55s ease; padding:28px}
+  #boot.done{opacity:0; pointer-events:none}
+  .boot-inner{font-family:var(--mono); font-size:12.5px; letter-spacing:.06em; color:var(--green-soft); max-width:400px; width:100%}
+  .boot-inner .bt{color:var(--green); font-size:12.5px; letter-spacing:.3em; text-transform:uppercase; margin-bottom:18px;
+    opacity:0; animation:btin .4s ease forwards; display:flex; align-items:center; gap:10px}
+  .boot-inner .bt::before{content:""; width:7px; height:7px; border-radius:50%; background:var(--green)}
+  .boot-inner p{margin:7px 0; opacity:0; white-space:nowrap; overflow:hidden; animation:btin .4s ease forwards}
+  .boot-inner p span{color:var(--cream)}
+  .boot-inner p.ok::after{content:" OK"; color:var(--green)}
+  .boot-inner p:nth-child(2){animation-delay:.4s} .boot-inner p:nth-child(3){animation-delay:.8s} .boot-inner p:nth-child(4){animation-delay:1.2s}
+  .boot-line{height:1px; background:linear-gradient(90deg,var(--green-deep),transparent); margin:18px 0; opacity:0; animation:btin .4s ease 1.3s forwards}
+  .boot-skip{font-family:var(--mono); font-size:10px; letter-spacing:.2em; color:#4a5651; text-transform:uppercase; opacity:0; animation:btin .3s ease 1.5s forwards}
+  @keyframes btin{from{opacity:0; transform:translateY(5px)}to{opacity:1; transform:none}}
+
+  /* ===== modal ===== */
+  .scrim{position:fixed; inset:0; background:rgba(3,6,9,.82); backdrop-filter:blur(7px); display:none; align-items:center; justify-content:center; padding:22px; z-index:60}
+  .scrim.open{display:flex; animation:fade .3s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .modal{width:100%; max-width:470px; position:relative; overflow:hidden;
+    background:linear-gradient(180deg,rgba(15,23,23,.94),rgba(8,13,15,.96)); backdrop-filter:blur(22px);
+    border:1px solid var(--stroke); border-radius:20px; padding:26px;
+    box-shadow:0 36px 90px rgba(0,0,0,.66); animation:modalin .42s var(--ease-out)}
+  @keyframes modalin{from{opacity:0; transform:translateY(14px) scale(.98)}to{opacity:1; transform:none}}
+  .modal h2{font-family:var(--mono); text-transform:uppercase; letter-spacing:.14em; font-size:13.5px; color:var(--green); margin:0 0 9px}
+  .modal p{font-family:var(--mono); font-size:11px; color:var(--cream-dim); letter-spacing:.03em; margin:0 0 15px; line-height:1.7}
+  .modal textarea{width:100%; height:100px; resize:vertical; background:#05080b; color:var(--green); border:1px solid var(--line);
+    border-radius:12px; font-family:var(--mono); font-size:12px; padding:13px; letter-spacing:.05em}
+  .modal textarea:focus{outline:none; border-color:var(--green-deep); box-shadow:0 0 0 3px rgba(31,217,155,.1)}
+  .modal .row{display:flex; gap:10px; margin-top:16px; justify-content:flex-end; flex-wrap:wrap}
+  .modal button{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:11px 17px; border-radius:11px; cursor:pointer; min-height:42px; transition:.25s var(--ease)}
+  .btn-primary{background:linear-gradient(180deg,var(--green-hi),var(--green)); color:var(--ink); border:0; font-weight:700}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-ghost{background:transparent; color:var(--cream-dim); border:1px solid var(--line)}
+  .btn-ghost:hover{color:var(--cream)}
+  .msg{font-family:var(--mono); font-size:11px; letter-spacing:.04em; margin-top:11px; min-height:14px}
+  .msg.ok{color:var(--green)} .msg.err{color:var(--red)}
+
+  footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--line); font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--green-deep); text-transform:uppercase; text-align:center; line-height:1.9}
+  footer .glyph{color:var(--green); letter-spacing:.5em; display:block; margin-bottom:9px; opacity:.7}
+
+  @media (max-width:520px){
+    .wrap{padding:28px 16px 0}
+    .dashboard{padding:22px 20px 24px}
+    .now-card{padding:20px}
+    .util{width:100%; margin-left:0}
+    .item{gap:12px}
+    .era{margin-top:52px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *{animation:none!important; transition-duration:.001ms!important}
+    #boot{display:none!important}
+    .reveal{opacity:1!important; transform:none!important}
+  }
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div id="mood-tint"></div>
+<div id="glow"></div>
+
+<div id="boot">
+  <div class="boot-inner">
+    <div class="bt">Time Variance Authority</div>
+    <p>&gt; <span>aligning the sacred timeline…</span></p>
+    <p class="ok">&gt; <span>locating variant JAYDEN-616…</span></p>
+    <p class="ok">&gt; <span>scanning for nexus events…</span></p>
+    <div class="boot-line"></div>
+    <div class="boot-skip">Tap to enter</div>
+  </div>
+</div>
+
+<div id="hud" aria-hidden="true">
+  <button class="hud-bar" id="hud-bar" aria-label="Back to top">
+    <span class="hud-pct" id="hud-pct">0%</span>
+    <span class="hud-thread"><i id="hud-fill"></i></span>
+    <span class="hud-now" id="hud-now"></span>
+  </button>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="hero-threads" aria-hidden="true">
+      <svg viewBox="0 0 760 200" preserveAspectRatio="xMidYMid slice" fill="none">
+        <g stroke-linecap="round">
+          <path d="M-20 130 C 180 130, 250 104, 400 104 C 560 104, 600 56, 780 50" stroke="rgba(31,217,155,.5)" stroke-width="1.4"/>
+          <path d="M400 104 C 520 104, 560 150, 780 156" stroke="rgba(63,200,230,.4)" stroke-width="1.1"/>
+          <path d="M400 104 C 500 104, 540 84, 780 96" stroke="rgba(154,107,255,.4)" stroke-width="1"/>
+          <circle cx="400" cy="104" r="4" fill="var(--nexus)"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="eyebrow">Personal Marathon Log</div>
+    <h1>The Sacred Timeline</h1>
+    <div class="sub">Every MCU film, series &amp; one-shot in Marvel's official chronological order. Tap any entry to log it. Saves on this device.</div>
+
+    <div class="dashboard">
+      <div class="rline">
+        <span>Variant: <b>Jayden&#8209;616</b></span>
+        <span class="live" id="r-status">Status: <b>Tracking</b></span>
+      </div>
+      <div class="integrity">
+        <span class="big" id="r-pct">0%</span>
+        <span class="lab">Timeline<br>Integrity</span>
+      </div>
+      <div class="thread-meter"><div class="thread-fill" id="r-fill"></div></div>
+      <div class="rline sub-line">
+        <span>Logged: <b id="r-logged">0 / 0</b></span>
+        <span>Up next: <b id="r-next">&mdash;</b></span>
+      </div>
+    </div>
+
+    <button class="now-card" id="now-card">
+      <span class="nc-label"><span class="orb"></span><span id="nc-tag">Currently watching</span></span>
+      <span class="nc-title" id="nc-title">—</span>
+      <span class="nc-meta" id="nc-meta"></span>
+      <span class="nc-go" id="nc-go">Jump to timeline →</span>
+    </button>
+
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Filter entries">
+        <button data-filter="all" aria-pressed="true">All</button>
+        <button data-filter="todo" aria-pressed="false">To&nbsp;Watch</button>
+        <button data-filter="done" aria-pressed="false">Watched</button>
+        <button data-filter="side" aria-pressed="false">Backlog</button>
+      </div>
+      <div class="util">
+        <button id="btn-export">Export</button>
+        <button id="btn-import">Import</button>
+        <button id="btn-reset">Reset</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i class="dot d-watched"></i>Watched</span>
+      <span><i class="dot d-watching"></i>Watching</span>
+      <span><i class="dot d-unwatched"></i>Not yet</span>
+      <span><i class="dot d-planned"></i>Planned</span>
+      <span><i class="dot d-optional"></i>Optional</span>
+      <span><i class="dot d-future"></i>Future</span>
+    </div>
+    <div class="hint">Tap an entry to cycle its status</div>
+  </header>
+
+  <main id="timeline"></main>
+  <footer><span class="glyph">◆ ◇ ◆</span>Sacred Timeline log v4 &middot; "For all time. Always."</footer>
+</div>
+
+<div class="scrim" id="scrim">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <h2 id="m-title">Sync code</h2>
+    <p id="m-desc"></p>
+    <textarea id="m-text" spellcheck="false" autocomplete="off"></textarea>
+    <div class="msg" id="m-msg"></div>
+    <div class="row" id="m-actions"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     TIMELINE DATA  —  edit here.
+       name   : era title
+       mood   : visual identity → archive | cosmic | hellskitchen | multiverse | void
+       image  : OPTIONAL poster artwork for this era's floating shard.
+                e.g. image:"assets/defenders-era.jpg"
+                Leave null to use the built-in CSS placeholder art.
+                ▼▼ ADD YOUR OWN ERA IMAGES IN THE `image:` FIELDS BELOW ▼▼
+       items  : [title, status, note?]
+                status ∈ unwatched | watched | watching | planned | optional | future
+     ============================================================ */
+  var ERAS = [
+    { name:"Origin Era", mood:"archive",
+      image:null,  /* e.g. "assets/origin-era.jpg" — sacred archive / shield / Wakanda legacy */
+      items:[
+      ["Eyes of Wakanda","watched"],
+      ["Captain America: The First Avenger","watched"],
+      ["One-Shot: Agent Carter","watched"],
+      ["Captain Marvel","watched"],
+      ["Iron Man","watched"],
+      ["Iron Man 2","watched"],
+      ["The Incredible Hulk","watched"],
+      ["One-Shot: A Funny Thing Happened on the Way to Thor's Hammer","watched"],
+      ["Thor","watched"],
+      ["One-Shot: The Consultant","watched"],
+      ["The Avengers","watched"],
+      ["One-Shot: Item 47","watched"],
+      ["Thor: The Dark World","watched"],
+      ["Iron Man 3","watched"],
+      ["One-Shot: All Hail the King","watched"],
+      ["Captain America: The Winter Soldier","watched"]
+    ]},
+    { name:"Guardians / Ultron / Early Netflix", mood:"cosmic",
+      image:null,  /* e.g. "assets/cosmic-era.jpg" — deep space meets street-level NYC */
+      items:[
+      ["Guardians of the Galaxy","watched"],
+      ["Guardians of the Galaxy Vol. 2","watched"],
+      ["I Am Groot S1","optional","Summary received — backlog"],
+      ["I Am Groot S2","optional","Summary received — backlog"],
+      ["Daredevil S1","watched"],
+      ["Jessica Jones S1","watched"],
+      ["Avengers: Age of Ultron","watched"],
+      ["Ant-Man","watched"]
+    ]},
+    { name:"Civil War / Defenders Era", mood:"hellskitchen",
+      image:null,  /* e.g. "assets/defenders-era.jpg" — dark red Hell's Kitchen corridor */
+      items:[
+      ["Daredevil S2","watched"],
+      ["Luke Cage S1","watched"],
+      ["Iron Fist S1","watched"],
+      ["The Defenders","watched"],
+      ["Captain America: Civil War","watched"],
+      ["Black Widow","watched"],
+      ["Black Panther","watched"],
+      ["Spider-Man: Homecoming","watched"],
+      ["The Punisher S1","watched"],
+      ["Doctor Strange","planned","Watching after Daredevil S3"],
+      ["Jessica Jones S2","watched"],
+      ["Luke Cage S2","watched"],
+      ["Iron Fist S2","watched"],
+      ["Daredevil S3","watching"],
+      ["Thor: Ragnarok","unwatched"],
+      ["The Punisher S2","unwatched"],
+      ["Jessica Jones S3","unwatched"],
+      ["Ant-Man and the Wasp","unwatched"],
+      ["Avengers: Infinity War","unwatched"],
+      ["Avengers: Endgame","unwatched"]
+    ]},
+    { name:"Post-Endgame / Multiverse Saga", mood:"multiverse",
+      image:null,  /* e.g. "assets/multiverse-era.jpg" — portals, hex magic, shattered glass */
+      items:[
+      ["Loki S1","unwatched"],
+      ["What If…? S1","unwatched"],
+      ["Marvel Zombies","unwatched"],
+      ["WandaVision","unwatched"],
+      ["Shang-Chi and the Legend of the Ten Rings","unwatched"],
+      ["The Falcon and the Winter Soldier","unwatched"],
+      ["Spider-Man: Far From Home","unwatched"],
+      ["Eternals","unwatched"],
+      ["Spider-Man: No Way Home","unwatched"],
+      ["Doctor Strange in the Multiverse of Madness","unwatched"],
+      ["Hawkeye","unwatched"],
+      ["Moon Knight","unwatched"],
+      ["Black Panther: Wakanda Forever","unwatched"],
+      ["Echo","unwatched"],
+      ["She-Hulk: Attorney at Law","unwatched"],
+      ["Ms. Marvel","unwatched"],
+      ["Thor: Love and Thunder","unwatched"],
+      ["Ironheart","unwatched"],
+      ["Werewolf by Night","unwatched"],
+      ["The Guardians of the Galaxy Holiday Special","unwatched"],
+      ["Ant-Man and the Wasp: Quantumania","unwatched"],
+      ["Guardians of the Galaxy Vol. 3","unwatched"],
+      ["Secret Invasion","unwatched"],
+      ["The Marvels","unwatched"],
+      ["Loki S2","unwatched"],
+      ["What If…? S2","unwatched"],
+      ["Deadpool & Wolverine","unwatched"],
+      ["Agatha All Along","unwatched"],
+      ["What If…? S3","unwatched"],
+      ["Daredevil: Born Again S1","unwatched"],
+      ["Captain America: Brave New World","unwatched"],
+      ["Thunderbolts*","unwatched"],
+      ["The Fantastic Four: First Steps","unwatched"],
+      ["Wonder Man","unwatched"],
+      ["Daredevil: Born Again S2","unwatched"],
+      ["The Punisher: One Last Kill","unwatched"]
+    ]},
+    { name:"Future / Not Yet Placed", mood:"void", future:true,
+      image:null,  /* e.g. "assets/future-void.jpg" — unstable branching timelines */
+      items:[
+      ["Spider-Man: Brand New Day","future","In theaters Jul 31, 2026"],
+      ["Avengers: Doomsday","future","In theaters Dec 18, 2026"],
+      ["Avengers: Secret Wars","future","In theaters Dec 17, 2027"]
+    ]}
+  ];
+
+  /* mood → ambient tint + small caption */
+  var MOODS = {
+    archive:      {amb:"rgba(31,217,155,.06)",  tag:"Sacred Archive"},
+    cosmic:       {amb:"rgba(39,184,176,.06)",  tag:"Cosmic & Street-Level"},
+    hellskitchen: {amb:"rgba(230,57,80,.05)",   tag:"Hell's Kitchen"},
+    multiverse:   {amb:"rgba(154,107,255,.07)", tag:"Broken Reality"},
+    void:         {amb:"rgba(120,90,255,.06)",  tag:"Unwritten Future"}
+  };
+
+  /* Abstract CSS-poster motifs (original art — no copyrighted images) */
+  function artMotif(mood){
+    var s;
+    if(mood==="archive"){
+      s='<path d="M100 150 L150 168 V210 C150 250 128 274 100 290 C72 274 50 250 50 210 V168 Z" fill="currentColor" opacity=".55"/>'+
+        '<g fill="none" stroke="currentColor" stroke-width="2" opacity=".35"><path d="M100 168 V274 M72 190 H128"/><path d="M36 120 Q100 94 164 120"/><path d="M26 142 Q100 110 174 142" opacity=".6"/></g>';
+    } else if(mood==="cosmic"){
+      s='<circle cx="100" cy="256" r="80" fill="currentColor" opacity=".4"/>'+
+        '<ellipse cx="100" cy="252" rx="124" ry="26" fill="none" stroke="currentColor" stroke-width="2" opacity=".45" transform="rotate(-13 100 252)"/>'+
+        '<g fill="currentColor"><circle cx="40" cy="64" r="2.4"/><circle cx="150" cy="44" r="2"/><circle cx="172" cy="120" r="1.8"/><circle cx="58" cy="128" r="1.6" opacity=".7"/></g>';
+    } else if(mood==="hellskitchen"){
+      s='<g fill="currentColor" opacity=".55"><rect x="14" y="34" width="11" height="252"/><rect x="46" y="34" width="8" height="252" opacity=".7"/><rect x="148" y="34" width="8" height="252" opacity=".7"/><rect x="176" y="34" width="11" height="252"/></g>'+
+        '<rect x="82" y="60" width="36" height="226" fill="currentColor" opacity=".22"/>';
+    } else if(mood==="multiverse"){
+      s='<circle cx="100" cy="158" r="74" fill="none" stroke="currentColor" stroke-width="3" opacity=".5"/>'+
+        '<circle cx="100" cy="158" r="50" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".3"/>'+
+        '<g stroke="currentColor" stroke-width="1.4" opacity=".4"><path d="M100 158 L38 60 M100 158 L178 98 M100 158 L58 262 M100 158 L172 244"/></g>';
+    } else {
+      s='<g fill="none" stroke="currentColor" stroke-width="2.6" opacity=".5" stroke-linecap="round">'+
+        '<path d="M100 296 V178"/><path d="M100 178 C 58 156 48 92 28 28"/><path d="M100 178 C 100 132 100 88 100 18"/>'+
+        '<path d="M100 178 C 142 156 152 92 172 28"/><path d="M100 178 C 80 158 72 126 52 92" opacity=".6"/></g>'+
+        '<circle cx="100" cy="178" r="5" fill="currentColor" opacity=".6"/>';
+    }
+    return '<svg viewBox="0 0 200 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true">'+s+'</svg>';
+  }
+
+  var ORDER=["unwatched","watched","watching","planned","optional","future"];
+  var LABEL={unwatched:"Not yet",watched:"Watched",watching:"Watching",planned:"Planned",optional:"Optional",future:"Future"};
+  var CODE={unwatched:"u",watched:"w",watching:"c",planned:"p",optional:"o",future:"f"};
+  var DECODE={u:"unwatched",w:"watched",c:"watching",p:"planned",o:"optional",f:"future"};
+  var KEY="mcu_sacred_timeline_v4";
+
+  var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var FLAT=[], FLAT_ERA=[], FLAT_ERAIDX=[];
+  ERAS.forEach(function(era,ei){ era.items.forEach(function(it){
+    FLAT.push({title:it[0],status:it[1],note:it[2]||null}); FLAT_ERA.push(era.name); FLAT_ERAIDX.push(ei);
+  }); });
+
+  var filter="all", memFallback=null, shownPct=0;
+
+  function save(){
+    var code=FLAT.map(function(e){return CODE[e.status];}).join("");
+    try{ localStorage.setItem(KEY,code); }catch(e){ memFallback=code; }
+  }
+  function load(){
+    var code=null;
+    try{ code=localStorage.getItem(KEY); }catch(e){ code=memFallback; }
+    if(code) applyCode(code,true);
+  }
+  function applyCode(raw,silent){
+    var code=String(raw||"").trim().replace(/^ST1[:\s]*/i,"");
+    if(code.length!==FLAT.length||!/^[uwcpof]+$/.test(code)) return false;
+    for(var i=0;i<FLAT.length;i++){ FLAT[i].status=DECODE[code[i]]; }
+    if(!silent) save();
+    return true;
+  }
+  function stats(){
+    var watched=0,nonFuture=0,nextIdx=-1,watchingIdx=-1;
+    for(var i=0;i<FLAT.length;i++){
+      var s=FLAT[i].status;
+      if(s!=="future"){ nonFuture++; if(s==="watched") watched++; }
+      if(s==="watching"&&watchingIdx<0) watchingIdx=i;
+      if(s==="unwatched"&&nextIdx<0) nextIdx=i;
+    }
+    return {watched:watched,nonFuture:nonFuture,pct:nonFuture?Math.round(watched/nonFuture*100):0,nextIdx:nextIdx,watchingIdx:watchingIdx};
+  }
+  function eraSecured(era){
+    var any=false, all=true;
+    era.items.forEach(function(it){
+      var s=findStatus(it[0]);
+      if(s!=="optional"&&s!=="future"){ if(s==="watched") any=true; else all=false; }
+    });
+    return any&&all;
+  }
+  var statusIndex={}; FLAT.forEach(function(e,i){ statusIndex[e.title]=i; });
+  function findStatus(title){ return FLAT[statusIndex[title]].status; }
+
+  function passesFilter(s){
+    if(filter==="all") return true;
+    if(filter==="todo") return s==="unwatched"||s==="watching"||s==="planned";
+    if(filter==="done") return s==="watched";
+    if(filter==="side") return s==="optional"||s==="future";
+    return true;
+  }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+  var tl=document.getElementById("timeline");
+
+  /* ---------- observers (reveal + ambient mood) ---------- */
+  var revObserver=null, moodObserver=null, shardEls=[];
+  function setupObservers(){
+    if(revObserver) revObserver.disconnect();
+    if(moodObserver) moodObserver.disconnect();
+
+    if(!REDUCE){
+      revObserver=new IntersectionObserver(function(entries){
+        entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add("in"); revObserver.unobserve(en.target); } });
+      },{root:null, rootMargin:"0px 0px -7% 0px", threshold:.1});
+      tl.querySelectorAll(".reveal").forEach(function(el){ revObserver.observe(el); });
+    }
+
+    moodObserver=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting && en.intersectionRatio>0.4){
+          var amb=en.target.getAttribute("data-amb");
+          if(amb) document.documentElement.style.setProperty("--amb",amb);
+        }
+      });
+    },{root:null, rootMargin:"-12% 0px -48% 0px", threshold:[0.4,0.7]});
+    tl.querySelectorAll(".era").forEach(function(el){ moodObserver.observe(el); });
+
+    shardEls = Array.prototype.slice.call(tl.querySelectorAll(".era-art"));
+  }
+
+  /* ---------- main render ---------- */
+  function render(opts){
+    opts=opts||{};
+    var animate = (opts.animate!==false) && !REDUCE;
+    var st=stats();
+
+    document.getElementById("r-fill").style.right=(100-st.pct)+"%";
+    document.getElementById("r-logged").textContent=st.watched+" / "+st.nonFuture;
+    document.getElementById("r-next").textContent=st.nextIdx>=0?FLAT[st.nextIdx].title:"Marathon complete";
+    document.getElementById("r-status").innerHTML="Status: <b>"+(st.pct>=100?"Complete":"Tracking")+"</b>";
+    tweenPct(st.pct);
+    updateNowCard(st);
+    updateHud(st);
+
+    var activeIdx = st.watchingIdx>=0 ? st.watchingIdx : st.nextIdx;
+    var activeEra = activeIdx>=0 ? FLAT_ERAIDX[activeIdx] : -1;
+
+    var idx=0, html="";
+    ERAS.forEach(function(era,ei){
+      var rows="", shown=0, vis=0;
+      era.items.forEach(function(){
+        var e=FLAT[idx], myIdx=idx; idx++;
+        if(!passesFilter(e.status)) return;
+        shown++;
+        var rcls = animate ? " reveal" : "";
+        var delay = animate ? ' style="--d:'+(Math.min(vis,8)*0.045).toFixed(3)+'s"' : "";
+        vis++;
+        var tag="";
+        if(myIdx===st.watchingIdx) tag='<span class="tag tag-here">You are here</span>';
+        else if(myIdx===st.nextIdx) tag='<span class="tag tag-next">Next</span>';
+        var note=e.note?'<span class="note">'+esc(e.note)+'</span>':'';
+        rows+='<button class="item s-'+e.status+rcls+'" data-i="'+myIdx+'"'+delay+'>'+
+              '<span class="node"><i></i></span>'+
+              '<span class="title">'+esc(e.title)+note+'</span>'+tag+
+              '<span class="pill">'+LABEL[e.status]+'</span></button>';
+      });
+      if(shown===0) return;
+
+      var mood = era.mood||"archive", M = MOODS[mood]||MOODS.archive, isActive = (ei===activeEra);
+      var stamp=(filter==="all"&&eraSecured(era))?'<span class="stamp">Secured</span>':'';
+      var badge=isActive?'<span class="chapter-badge">Current Chapter</span>':'';
+      var ecls = "era mood-"+mood+(era.future?" fut":"")+(isActive?" active":"")+(animate?" reveal":"");
+
+      var hasImg = !!era.image;
+      var artStyle = hasImg ? ' style="background-image:url(\''+esc(era.image)+'\')"' : '';
+      var shard = '<span class="shard"'+(hasImg?artStyle:'')+'>'+(hasImg?'':'<span class="motif">'+artMotif(mood)+'</span>')+'</span>';
+      var art = '<div class="era-art'+(hasImg?' has-img':'')+(animate?' reveal':'')+'" aria-hidden="true">'+shard+'</div>';
+
+      html+='<section class="'+ecls+'" data-amb="'+M.amb+'">'+
+            art+
+            '<div class="era-head">'+
+            '<span class="era-num">'+String(ei+1).padStart(2,"0")+' · '+esc(M.tag)+'</span>'+
+            '<span class="era-name">'+esc(era.name)+'</span>'+badge+stamp+
+            '<span class="era-count">'+shown+'</span></div>'+
+            '<div class="list">'+rows+'</div></section>';
+    });
+    tl.innerHTML=html||'<p style="font-family:var(--mono);color:var(--cream-dim);font-size:12px;text-align:center;margin-top:40px">Nothing matches this filter.</p>';
+
+    setupObservers();
+  }
+
+  /* ---------- now / hero card ---------- */
+  var nowCard=document.getElementById("now-card"), ncTag=document.getElementById("nc-tag"),
+      ncTitle=document.getElementById("nc-title"), ncMeta=document.getElementById("nc-meta"), ncGo=document.getElementById("nc-go");
+  var focusIdx=-1;
+  function updateNowCard(st){
+    var i = st.watchingIdx>=0 ? st.watchingIdx : st.nextIdx;
+    nowCard.classList.remove("complete");
+    if(i<0){
+      focusIdx=-1; nowCard.classList.add("complete");
+      ncTag.textContent="Timeline secured"; ncTitle.textContent="Marathon complete";
+      ncMeta.innerHTML="Every logged entry is watched. <em>For all time. Always.</em>"; ncGo.style.display="none"; return;
+    }
+    focusIdx=i; ncGo.style.display="";
+    var e=FLAT[i], watching = st.watchingIdx>=0;
+    ncTag.textContent = watching ? "Currently watching" : "Up next";
+    ncTitle.textContent = e.title;
+    var meta = '<em>'+esc(FLAT_ERA[i])+'</em>';
+    if(e.note) meta += ' &middot; '+esc(e.note);
+    meta += '<br>'+st.watched+' watched · '+(st.nonFuture-st.watched)+' to go in the saga';
+    ncMeta.innerHTML = meta;
+  }
+  nowCard.addEventListener("click",function(){
+    if(focusIdx<0) return;
+    var el=tl.querySelector('.item[data-i="'+focusIdx+'"]');
+    if(!el){ filter="all"; document.querySelectorAll(".seg button").forEach(function(x){ x.setAttribute("aria-pressed",x.getAttribute("data-filter")==="all"?"true":"false"); }); render(); el=tl.querySelector('.item[data-i="'+focusIdx+'"]'); }
+    if(el){
+      el.scrollIntoView({behavior:REDUCE?"auto":"smooth", block:"center"});
+      el.classList.remove("sealed"); void el.offsetWidth; el.classList.add("sealed");
+      var node=el.querySelector(".node"); if(node){ node.classList.add("ignite"); setTimeout(function(){node.classList.remove("ignite");},820); }
+    }
+  });
+
+  /* ---------- sticky HUD ---------- */
+  var hud=document.getElementById("hud"), hudPct=document.getElementById("hud-pct"),
+      hudFill=document.getElementById("hud-fill"), hudNow=document.getElementById("hud-now"),
+      dashboard=document.querySelector(".dashboard");
+  function updateHud(st){
+    hudPct.textContent=st.pct+"%"; hudFill.style.width=st.pct+"%";
+    var i = st.watchingIdx>=0 ? st.watchingIdx : st.nextIdx;
+    if(i<0){ hudNow.innerHTML="Timeline secured"; }
+    else { hudNow.innerHTML=(st.watchingIdx>=0?"Watching ":"Next ")+"<b>"+esc(FLAT[i].title)+"</b>"; }
+  }
+  document.getElementById("hud-bar").addEventListener("click",function(){ window.scrollTo({top:0,behavior:REDUCE?"auto":"smooth"}); });
+
+  /* ---------- scroll: HUD toggle + gentle parallax ---------- */
+  var glow=document.getElementById("glow"), ticking=false;
+  function onScroll(){
+    if(ticking) return; ticking=true;
+    requestAnimationFrame(function(){
+      var y=window.pageYOffset||document.documentElement.scrollTop;
+      var trig = dashboard ? dashboard.getBoundingClientRect().bottom : 200;
+      if(trig<-10) hud.classList.add("show"); else hud.classList.remove("show");
+      if(!REDUCE){
+        glow.style.transform="translateY("+(y*0.12)+"px)";
+        var vh=window.innerHeight;
+        for(var k=0;k<shardEls.length;k++){
+          var r=shardEls[k].getBoundingClientRect();
+          if(r.bottom>-60 && r.top<vh+60){
+            var p=((r.top+r.height/2)-vh/2)/vh;
+            shardEls[k].style.transform="translateY("+(p*-22).toFixed(1)+"px)";
+          }
+        }
+      }
+      ticking=false;
+    });
+  }
+  addEventListener("scroll",onScroll,{passive:true});
+
+  /* ---------- animated percent counter ---------- */
+  var pctEl=document.getElementById("r-pct"), tweenRAF=null;
+  function tweenPct(target){
+    if(REDUCE){ shownPct=target; pctEl.textContent=target+"%"; return; }
+    cancelAnimationFrame(tweenRAF);
+    var start=shownPct, t0=null, dur=750;
+    function step(ts){ if(!t0)t0=ts; var k=Math.min(1,(ts-t0)/dur);
+      var v=Math.round(start+(target-start)*(1-Math.pow(1-k,3)));
+      pctEl.textContent=v+"%"; if(k<1) tweenRAF=requestAnimationFrame(step); else shownPct=target; }
+    tweenRAF=requestAnimationFrame(step);
+  }
+
+  /* ---------- status cycling (tap) ---------- */
+  tl.addEventListener("click",function(ev){
+    var btn=ev.target.closest(".item"); if(!btn) return;
+    var i=+btn.getAttribute("data-i");
+    var ni=(ORDER.indexOf(FLAT[i].status)+1)%ORDER.length;
+    var became=ORDER[ni];
+    FLAT[i].status=became;
+    save(); render({animate:false});
+    if(became==="watched"){
+      var el=tl.querySelector('.item[data-i="'+i+'"]');
+      if(el){
+        var node=el.querySelector(".node"), title=el.querySelector(".title");
+        el.classList.add("sealed");
+        if(node) node.classList.add("ignite");
+        if(title) title.classList.add("flare");
+        setTimeout(function(){ el.classList.remove("sealed"); if(node) node.classList.remove("ignite"); if(title) title.classList.remove("flare"); },860);
+      }
+    }
+  });
+
+  /* ---------- filters ---------- */
+  document.querySelectorAll(".seg button").forEach(function(b){
+    b.addEventListener("click",function(){
+      filter=b.getAttribute("data-filter");
+      document.querySelectorAll(".seg button").forEach(function(x){ x.setAttribute("aria-pressed",x===b?"true":"false"); });
+      render();
+    });
+  });
+
+  /* ---------- modal: export / import / reset ---------- */
+  var scrim=document.getElementById("scrim"),mTitle=document.getElementById("m-title"),mDesc=document.getElementById("m-desc"),
+      mText=document.getElementById("m-text"),mMsg=document.getElementById("m-msg"),mActions=document.getElementById("m-actions");
+  function openModal(){ scrim.classList.add("open"); }
+  function closeModal(){ scrim.classList.remove("open"); mMsg.textContent=""; mMsg.className="msg"; mText.style.display=""; }
+  scrim.addEventListener("click",function(e){ if(e.target===scrim) closeModal(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeModal(); });
+  function flash(m,k){ mMsg.textContent=m; mMsg.className="msg "+(k||""); }
+
+  document.getElementById("btn-export").addEventListener("click",function(){
+    mTitle.textContent="Export progress"; mDesc.textContent="Copy this code and paste it into Import on your other device.";
+    mText.value="ST1:"+FLAT.map(function(e){return CODE[e.status];}).join(""); mText.readOnly=true;
+    mActions.innerHTML='<button class="btn-ghost" data-act="close">Close</button><button class="btn-primary" data-act="copy">Copy</button>';
+    openModal(); mText.focus(); mText.select();
+  });
+  document.getElementById("btn-import").addEventListener("click",function(){
+    mTitle.textContent="Import progress"; mDesc.textContent="Paste a code from another device, then apply. This replaces progress on this device.";
+    mText.value=""; mText.readOnly=false;
+    mActions.innerHTML='<button class="btn-ghost" data-act="close">Cancel</button><button class="btn-primary" data-act="apply">Apply</button>';
+    openModal(); mText.focus();
+  });
+  document.getElementById("btn-reset").addEventListener("click",function(){
+    mTitle.textContent="Reset tracker"; mDesc.textContent="Restores every entry to its starting status. Export first if you want a backup.";
+    mText.value=""; mText.style.display="none";
+    mActions.innerHTML='<button class="btn-ghost" data-act="close">Cancel</button><button class="btn-primary" data-act="reset">Reset</button>';
+    openModal();
+  });
+  mActions.addEventListener("click",function(e){
+    var act=e.target.getAttribute("data-act"); if(!act) return;
+    if(act==="close"){ closeModal(); return; }
+    if(act==="copy"){ mText.select();
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(mText.value).then(function(){flash("Copied to clipboard.","ok");}).catch(leg); }
+      else leg();
+      function leg(){ try{ document.execCommand("copy"); flash("Copied.","ok"); }catch(_){ flash("Select the code and copy manually.","err"); } }
+      return; }
+    if(act==="apply"){ if(applyCode(mText.value,false)){ render(); flash("Progress imported.","ok"); setTimeout(closeModal,700); } else flash("That code doesn't look right — check you copied all of it.","err"); return; }
+    if(act==="reset"){ var i=0; ERAS.forEach(function(era){ era.items.forEach(function(it){ FLAT[i].status=it[1]; i++; }); }); save(); render(); closeModal(); return; }
+  });
+
+  /* ---------- ambient embers (sparse, slow) ---------- */
+  (function(){
+    if(REDUCE) return;
+    var cv=document.getElementById("stars"), cx=cv.getContext("2d"), W,H,dpr,parts=[];
+    var COLS=[[95,240,196],[63,200,230],[154,107,255]];
+    function resize(){ dpr=Math.min(window.devicePixelRatio||1,2); W=cv.width=innerWidth*dpr; H=cv.height=innerHeight*dpr;
+      cv.style.width=innerWidth+"px"; cv.style.height=innerHeight+"px"; seed(); }
+    function seed(){ parts=[]; var n=Math.round(Math.min(34,innerWidth/16));
+      for(var i=0;i<n;i++) parts.push({x:Math.random()*W, y:Math.random()*H, r:(Math.random()*1.2+0.5)*dpr,
+        vy:(Math.random()*0.16+0.04)*dpr, sway:Math.random()*0.5+0.2, ph:Math.random()*6.28,
+        a:Math.random()*0.32+0.1, c:COLS[(Math.random()*COLS.length)|0]}); }
+    function frame(t){ cx.clearRect(0,0,W,H); cx.globalCompositeOperation="lighter";
+      for(var i=0;i<parts.length;i++){ var p=parts[i]; p.y-=p.vy; p.x+=Math.sin(t/2600+p.ph)*p.sway*0.3*dpr;
+        if(p.y<-6){ p.y=H+6; p.x=Math.random()*W; }
+        var fl=0.6+0.4*Math.sin(t/1100+p.ph), al=p.a*fl, c=p.c;
+        var g=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*5);
+        g.addColorStop(0,"rgba("+c[0]+","+c[1]+","+c[2]+","+al+")"); g.addColorStop(1,"rgba("+c[0]+","+c[1]+","+c[2]+",0)");
+        cx.fillStyle=g; cx.beginPath(); cx.arc(p.x,p.y,p.r*5,0,6.28); cx.fill(); }
+      requestAnimationFrame(frame); }
+    resize(); addEventListener("resize",resize); requestAnimationFrame(frame);
+  })();
+
+  /* ---------- boot splash ---------- */
+  (function(){
+    var boot=document.getElementById("boot");
+    if(!boot) return;
+    if(REDUCE){ boot.classList.add("done"); boot.style.display="none"; return; }
+    function done(){ boot.classList.add("done"); setTimeout(function(){ boot.style.display="none"; },600); }
+    boot.addEventListener("click",done);
+    setTimeout(done,1900);
+  })();
+
+  /* ---------- boot ---------- */
+  load(); render(); onScroll();
+})();
+</script>
+</body>
+</html>
