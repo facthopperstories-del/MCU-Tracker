@@ -27,7 +27,7 @@
 window.APP = {
   name: "The Sacred Timeline",
   variant: "Jayden-616",
-  version: "6.0.1",
+  version: "7.0.0",
   deadlineTitle: "Avengers: Doomsday",
   deadline: [2026, 11, 18],      // year, month (0 = Jan), day — countdown target (local midnight)
   lastEvening: [2026, 11, 17],   // last evening that counts for the "per evening" pace
@@ -520,6 +520,7 @@ details.how summary{cursor:pointer;color:var(--accent);font-weight:600;font-size
 .stepper{display:flex;align-items:center;gap:12px}
 .stepper button{appearance:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--text);font:600 22px/1 var(--font);cursor:pointer;flex:none}
 .stepper .mid{flex:1;text-align:center}
+.stepper button[disabled]{opacity:.35}
 .stepper .mid b{font:700 26px/1 var(--display);font-variant-numeric:tabular-nums}
 .stepper .mid span{display:block;font-size:12.5px;color:var(--text-2);margin-top:4px}
 .stepper .bar{height:4px;border-radius:4px;background:var(--surface-2);margin-top:10px;overflow:hidden}
@@ -553,6 +554,44 @@ details.how summary{cursor:pointer;color:var(--accent);font-weight:600;font-size
 .rate-one .ttl{font:700 22px/1.15 var(--display);letter-spacing:-.02em}
 .rate-one .sub{color:var(--text-2);font-size:13.5px;margin-top:4px}
 .rate-prog{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);text-align:center;margin-top:14px}
+
+/* v7: airing episodes (locked until they're out) */
+.note.lock{color:var(--accent)}
+.s-waiting .rb{background:color-mix(in srgb,var(--accent-2) 8%,transparent)}
+.s-waiting .node{border-color:var(--accent);border-style:dashed}
+.s-waiting .pill{color:var(--accent-2)}
+.eps{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+.eps li{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line);font-size:14px}
+.eps li:last-child{border-bottom:0}
+.eps .n{font:600 12px/1 var(--mono);color:var(--text-3)}
+.eps .tt{color:var(--text);font-weight:600;min-width:0}
+.eps .tt small{display:block;font-weight:500;font-size:12px;color:var(--text-2);margin-top:2px}
+.eps .st{font:500 11.5px/1.3 var(--mono);color:var(--text-2);text-align:right;white-space:nowrap}
+.eps li.done .st{color:var(--accent-2)}
+.eps li.lk .tt{color:var(--text-2)}
+.eps li.lk .st{color:var(--accent)}
+.dd-grid span small{display:block;color:var(--accent);font-size:11.5px;margin-top:2px}
+details.spoil{margin:0}
+details.spoil summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px;padding:6px 0}
+details.spoil ul{margin:8px 0 0;padding-left:18px;color:var(--text-2);font-size:14px;line-height:1.5}
+details.spoil li{margin-bottom:6px}
+
+/* v7: Coming later — read-only, never counted */
+.later{position:relative;margin-top:72px}
+.later .era-no{-webkit-text-stroke:1.2px color-mix(in srgb,var(--accent-2) 70%,transparent)}
+.later-list{list-style:none;margin:0;padding:6px 0 0}
+.lt{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.lt:last-child{border-bottom:0}
+.lt .t{font-size:15.5px}
+.lt .poster{filter:saturate(.55) brightness(.85)}
+.lt .end{gap:6px}
+.lt .when{font:600 12px/1.2 var(--mono);color:var(--text);white-space:nowrap;text-align:right}
+.lt .cd2{font:500 10.5px/1 var(--mono);color:var(--text-3);letter-spacing:.06em;white-space:nowrap}
+.conf{font:600 9.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:4px 7px;border-radius:99px;white-space:nowrap}
+.conf.ok{color:var(--accent-2);border:1px solid color-mix(in srgb,var(--accent-2) 55%,transparent)}
+.conf.yr{color:var(--text-2);border:1px solid var(--line)}
+.conf.rep{color:var(--accent);border:1px dashed color-mix(in srgb,var(--accent) 60%,transparent)}
+.later-foot{margin-top:12px;font-size:12.5px;color:var(--text-3);line-height:1.5}
 
 /* self-test */
 .tests{list-style:none;margin:0;padding:0}
@@ -679,7 +718,7 @@ details.how summary{cursor:pointer;color:var(--accent);font-weight:600;font-size
         </div>
         <div class="dd-grid">
           <div><b id="hWatched">0</b><span>hours watched</span></div>
-          <div><b id="hLeft">0</b><span>hours left</span></div>
+          <div><b id="hLeft">0</b><span id="hLeftLab">hours left</span></div>
           <div><b id="hPace">0</b><span>per evening needed</span></div>
         </div>
         <p class="dd-note" id="ddNote"></p>
@@ -699,11 +738,11 @@ details.how summary{cursor:pointer;color:var(--accent);font-weight:600;font-size
       <span><i class="lg w"></i>Watched</span><span><i class="lg c"></i>Watching</span><span><i class="lg"></i>Not yet</span>
       <span><i class="lg p"></i>Planned</span><span><i class="lg o"></i>Optional</span><span><i class="lg f"></i>Future</span>
     </div>
-    <div class="hint">Tap ○ or swipe → to log · swipe ← to start / +1 ep · tap a title for details</div>
+    <div class="hint">Tap ○ or swipe → to log · swipe ← to start / +1 ep · tap a title for details · 🔒 = episode not out yet</div>
 
     <div id="timeline"></div>
     <footer>
-      Sacred Timeline log v6 · "For all time. Always."<br>
+      Sacred Timeline log v7 · "For all time. Always."<br>
       <button id="footAbout">About &amp; credits</button>
     </footer>
   </div>
@@ -749,7 +788,7 @@ details.how summary{cursor:pointer;color:var(--accent);font-weight:600;font-size
       <h2>Wrapped</h2><p class="sub">Your recap card, unlocked when the timeline hits 100%.</p>
       <div id="sWrapped"></div>
     </section>
-    <footer>Sacred Timeline log v6<br><button id="footAbout2">About &amp; credits</button></footer>
+    <footer>Sacred Timeline log v7<br><button id="footAbout2">About &amp; credits</button></footer>
   </div>
 </main>
 
@@ -888,13 +927,19 @@ var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
      runtime : minutes. Series = whole season incl. credits.  // est = estimate
      theme   : key from THEMES (top of file)
      opts    : { s: default status, ep: episode count, note: text,
-                 tm: [kind, query, year, season] ← TMDB lookup override }
+                 tm: [kind, query, year, season] ← TMDB lookup override,
+                 air: [UTC ms per episode] ← series still airing (unaired eps are locked),
+                 ert: [minutes per episode], et: [episode titles] }
 
    ▼▼ COMIC PANELS ▼▼  Each era's `inspirations` array holds cover image URLs
    (1–3 per era) shown as the tilted comic panels.
    ===================================================================== */
 function E(id,title,type,year,rt,th,o){ o=o||{}; return {id:id,title:title,type:type,year:year,rt:rt,th:th,
-  s:o.s||"unwatched",ep:o.ep||0,note:o.note||null,tm:o.tm||null}; }
+  s:o.s||"unwatched",ep:o.ep||0,note:o.note||null,tm:o.tm||null,air:o.air||null,ert:o.ert||null,et:o.et||null}; }
+/* Disney+ drops are 6 pm Pacific. Stored in UTC so every phone shows its own local time
+   (Switzerland: 02:00 before the US clock change on 1 Nov, 03:00 after). */
+function PT6(y,m,d,dst){ return Date.UTC(y, m-1, d, dst ? 25 : 26, 0); } // 18:00 PDT = 01:00 UTC next day, PST = 02:00 UTC
+var VQ_AIR = [PT6(2026,10,13,1),PT6(2026,10,13,1),PT6(2026,10,20,1),PT6(2026,10,20,1),PT6(2026,10,27,1),PT6(2026,10,27,1),PT6(2026,11,3,0),PT6(2026,11,10,0)];
 
 var ERAS = [
   { key:"origin", name:"Origin Era", tag:"Sacred Archive", theme:"arc",
@@ -1008,7 +1053,11 @@ var ERAS = [
       E("wm","Wonder Man","series",2026,248,"queens",{ep:8}),                                   // reported
       E("dba2","Daredevil: Born Again S2","series",2026,393,"hellskitchen",{ep:8,tm:["tv","Daredevil: Born Again",2025,2]}), // est
       E("pols","The Punisher: One Last Kill","special",2026,51,"hellskitchen"),
-      E("sm4","Spider-Man: Brand New Day","film",2026,145,"queens")
+      E("sm4","Spider-Man: Brand New Day","film",2026,145,"queens"),
+      // VisionQuest — set in the MCU's present day, around Brand New Day (Terry Matalas). Runtimes reported (est).
+      E("vq","VisionQuest","series",2026,427,"mystic",{ep:8,tm:["tv","VisionQuest",2026,1],air:VQ_AIR,
+        ert:[48,49,50,50,50,50,62,68],
+        et:["No Strings","Theseus","Reboot","Malware","Firewall","Deadlock","Immolation","Forever"]})
     ]},
   { key:"future", name:"Future / Not Yet Placed", tag:"Unwritten Future", theme:"doom", future:true,
     inspirations: [
@@ -1016,7 +1065,7 @@ var ERAS = [
       "https://cdn.marvel.com/u/prod/marvel/i/mg/9/b0/51dee6dd91671/portrait_uncanny.webp",   // Secret Wars (1984) #1 — the original Secret Wars
     ],
     items: [
-      E("av5","Avengers: Doomsday","film",2026,150,"doom",{s:"future",note:"In theaters Dec 18, 2026"}),     // est — not released
+      E("av5","Avengers: Doomsday","film",2026,150,"doom",{s:"future",note:"In theaters Dec 18, 2026 · confirmed"}),     // est — not released
       E("av6","Avengers: Secret Wars","film",2027,150,"doom",{s:"future",note:"In theaters Dec 17, 2027"})   // est — not released
     ]}
 ];
@@ -1167,9 +1216,44 @@ var INSPO = {
   dba2:["Daredevil (2019) by Chip Zdarsky","dd19"],
   pols:["The Punisher MAX (2004) by Garth Ennis","pmax1"],
   sm4:["“Brand New Day” — The Amazing Spider-Man #546 (2008)","asm546"],
+  vq:["The Vision (2015) by Tom King — plus John Byrne's “Vision Quest”, West Coast Avengers #42–45 (1989)","vis"],
   av5:["Doctor Doom's debut — Fantastic Four #5 (1962)","ff5"],
   av6:["Secret Wars (1984) and Secret Wars (2015)","sw84"]
 };
+
+/* Extra info shown in an entry's details (text only — nothing to log). */
+var EXTRA = {
+  av4: { h:"Endgame Encore (2026 re-release)",
+    lead:"Back in theaters from 25 Sep 2026 with about 4 extra minutes shot during Doomsday's production. Regular screenings got a new intro plus ~1 min; the rest was exclusive to Infinity Vision screens.",
+    spoil:[
+      "Loki — links Steve & Peggy's ending to Loki as guardian of the branching multiverse, setting up Steve's return in Doomsday.",
+      "TVA — Mobius, Casey, Ouroboros and Miss Minutes watch whole realities sliding toward destruction.",
+      "Hulk — Bruce works on a serum to suppress the Hulk in an underground bunker; by the end Doom has taken Hulk.",
+      "The clanging — the metal sound at the very end of the credits now plays over Doctor Doom forging his mask."
+    ] }
+};
+
+/* =====================================================================
+   COMING LATER — read-only list. NEVER counted in progress, hours or eras.
+   ids are reserved: if one moves into the timeline later, reuse the same id.
+   c = "ok" confirmed date · "yr" year/window only · "rep" reported, not official
+   d = [y, m(1-12), d] when there's an exact date (used for sorting + countdown)
+   ===================================================================== */
+var LATER = [
+  {id:"fns2", title:"Your Friendly Neighborhood Spider-Man S2", type:"series", year:2027, when:"13 Jan 2027", d:[2027,1,13], c:"ok"},
+  {id:"dba3", title:"Daredevil: Born Again S3", type:"series", year:2027, when:"~Mar 2027", sk:[2027,3,1], c:"rep", note:"Final season · 2027 confirmed, March reported"},
+  {id:"xm3", title:"X-Men '97 S3", type:"series", year:2027, when:"2027", sk:[2027,7,1], c:"yr"},
+  {id:"mzws", title:"Marvel Zombies: The Winter Soldier", type:"special", year:2027, when:"Halloween 2027", sk:[2027,10,31], c:"yr", note:"Exact date not announced"},
+  {id:"xmen", title:"X-Men", type:"film", year:2028, when:"5 May 2028", d:[2028,5,5], c:"rep", note:"Reported slate date"},
+  {id:"gr", title:"Ghost Rider", type:"film", year:2028, when:"28 Jul 2028", d:[2028,7,28], c:"rep", note:"Reported · officially just “2028”"},
+  {id:"xm4", title:"X-Men '97 S4", type:"series", year:2028, when:"2028", sk:[2028,7,1], c:"yr"},
+  {id:"zod", title:"Zodiac", type:"series", year:2028, when:"2028", sk:[2028,8,1], c:"yr", note:"Live-action spy series"},
+  {id:"mzfk", title:"Marvel Zombies: The Fist of Khonshu", type:"special", year:2028, when:"Halloween 2028", sk:[2028,10,31], c:"yr"},
+  {id:"bp3", title:"Black Panther 3", type:"film", year:2028, when:"15 Dec 2028", d:[2028,12,15], c:"ok"},
+  {id:"mzlg", title:"Marvel Zombies: The Last Guardian", type:"special", year:2029, when:"Halloween 2029", sk:[2029,10,31], c:"yr"}
+];
+var CONF_LABEL = {ok:"Confirmed", yr:"Year only", rep:"Reported"};
+function laterKey(x){ var a = x.d || x.sk; return Date.UTC(a[0], a[1]-1, a[2]); }
 
 /* Disney+ title links (same id in every country). No id → Marvel's Disney+ page. */
 var DPLUS = {
@@ -1221,6 +1305,14 @@ var DATA_ERRORS = (function(){
     if(ORDER.indexOf(e.s) < 0) errs.push(e.id + ": unknown default status");
     if(!TYPE_LABEL[e.type]) errs.push(e.id + ": unknown type");
     if(!(e.rt > 0)) errs.push(e.id + ": runtime missing");
+    if(e.air && (!e.ep || e.air.length !== e.ep)) errs.push(e.id + ": air dates must match episode count");
+    if(e.ert && (e.ert.length !== e.ep || e.ert.reduce(function(a,b){ return a+b; },0) !== e.rt)) errs.push(e.id + ": episode runtimes must add up to the runtime");
+    if(e.et && e.et.length !== e.ep) errs.push(e.id + ": episode titles must match episode count");
+  });
+  LATER.forEach(function(x){
+    if(!/^[a-z0-9]+$/.test(x.id)) errs.push("Coming later: bad id “" + x.id + "”");
+    if(seen[x.id]) errs.push("Coming later id “" + x.id + "” clashes with another id"); seen[x.id] = 1;
+    if(!(x.d || x.sk) || !CONF_LABEL[x.c] || !TYPE_LABEL[x.type]) errs.push("Coming later: “" + x.id + "” is incomplete");
   });
   if(LEGACY_ST1.length !== 83) errs.push("LEGACY_ST1 must list exactly 83 ids");
   var ls = {}; LEGACY_ST1.forEach(function(id){ if(!BY_ID[id]) errs.push("LEGACY_ST1 has unknown id “" + id + "”"); if(ls[id]) errs.push("LEGACY_ST1 repeats “" + id + "”"); ls[id] = 1; });
@@ -1301,10 +1393,28 @@ function migrateLegacyValue(v){
 
 /* ---- mutations (pure: operate on st) ---- */
 function epMin(e){ return e.ep ? e.rt / e.ep : 0; }
+function epRt(e, k){ return e.ert ? e.ert[k-1] : Math.round(epMin(e)); }       // runtime of episode k (1-based)
 function epsDone(e, r){ return r.s === "watched" ? e.ep : (r.ep || 0); }
-function progressMin(e, r){ if(r.s === "watched") return e.rt; if(e.ep && r.ep) return Math.round(epMin(e) * r.ep); return 0; }
-function applyStatus(st, id, s, today){
+function minsForEps(e, n){ if(!e.ert) return Math.round(epMin(e) * n); var m = 0; for(var k=1;k<=n;k++) m += e.ert[k-1]; return m; }
+function progressMin(e, r){ if(r.s === "watched") return e.rt; if(e.ep && r.ep) return minsForEps(e, r.ep); return 0; }
+/* ---- airing (v7): episodes with an air time in the future are locked ---- */
+function airedCount(e, now){ if(!e.air) return e.ep; now = now == null ? Date.now() : now; var n = 0; e.air.forEach(function(t){ if(t <= now) n++; }); return n; }
+function isAiring(e, now){ return !!e.air && airedCount(e, now) < e.ep; }
+function nextDrop(e, now){ // {from, to, t} — the next batch of episodes that share an air time
+  if(!isAiring(e, now)) return null; var a = airedCount(e, now), t = e.air[a], to = a + 1;
+  while(to < e.ep && e.air[to] === t) to++;
+  return {from:a+1, to:to, t:t};
+}
+function lockedMin(e, r, now){ // minutes you can't watch yet
+  if(!isAiring(e, now) || r.s === "watched") return 0;
+  var a = airedCount(e, now), from = Math.max(a, epsDone(e, r)), m = 0;
+  for(var k = from + 1; k <= e.ep; k++) m += epRt(e, k);
+  return m;
+}
+function isWaiting(e, r, now){ return isAiring(e, now) && r.s !== "watched" && epsDone(e, r) >= airedCount(e, now); }
+function applyStatus(st, id, s, today, now){
   var e = BY_ID[id], r = st.e[id], prev = r.s; if(prev === s) return false;
+  if(s === "watched" && isAiring(e, now)) return false;             // can't finish a show that's still airing
   today = today == null ? dayNum() : today;
   r.s = s; r.u = Date.now(); var ev = (r.ev || []).filter(function(x){ return x[1] !== 0; });
   if(s === "watched"){
@@ -1318,13 +1428,16 @@ function applyStatus(st, id, s, today){
   if(ev.length) r.ev = ev; else delete r.ev;
   return true;
 }
-function applyEp(st, id, n, today){
+function applyEp(st, id, n, today, now){
   var e = BY_ID[id], r = st.e[id]; if(!e.ep) return false;
   today = today == null ? dayNum() : today;
-  n = Math.max(0, Math.min(e.ep, n|0)); var cur = epsDone(e, r); if(n === cur) return false;
+  var cur = epsDone(e, r);
+  n = Math.max(0, Math.min(e.ep, n|0));
+  if(n > cur) n = Math.min(n, Math.max(cur, airedCount(e, now)));  // locked episodes can't be logged
+  if(n === cur) return false;
   r.u = Date.now();
   var ev = (r.ev || []).filter(function(x){ return x[1] !== 0 && x[1] <= n; });
-  if(n > cur) for(var k = cur + 1; k <= n; k++) ev.push([today, k, Math.round(epMin(e))]);
+  if(n > cur) for(var k = cur + 1; k <= n; k++) ev.push([today, k, epRt(e, k)]);
   if(n === e.ep){
     var epM = ev.reduce(function(a,x){ return a + x[2]; }, 0);
     r.s = "watched"; r.d = today; delete r.ep; ev.push([today, 0, Math.max(0, Math.round(e.rt - epM))]);
@@ -1421,23 +1534,31 @@ function backup(reason){
 /* ---------- derived numbers ---------- */
 function isCounted(s){ return s !== "optional" && s !== "future"; }
 function isTodo(s){ return s === "unwatched" || s === "watching" || s === "planned"; }
-function compute(st){
-  st = st || S;
-  var r = {den:0, done:0, watchingIdx:-1, nextIdx:-1, plannedIdx:-1, wMin:0, leftMin:0, eras:[]};
+function compute(st, now){
+  st = st || S; now = now == null ? Date.now() : now;
+  var r = {den:0, done:0, watchingIdx:-1, nextIdx:-1, plannedIdx:-1, wMin:0, leftMin:0, lockedMin:0, unlockAt:0, eras:[]};
   ERAS.forEach(function(){ r.eras.push({den:0, done:0}); });
   ENTRIES.forEach(function(e,i){
     var rec = st.e[e.id], s = rec.s, pm = progressMin(e, rec);
     if(isCounted(s)){ r.den++; r.eras[e.era].den++; if(s === "watched"){ r.done++; r.eras[e.era].done++; } }
     r.wMin += pm;
-    if(isTodo(s)) r.leftMin += e.rt - pm;
-    if(s === "watching" && r.watchingIdx < 0) r.watchingIdx = i;
-    if(s === "unwatched" && r.nextIdx < 0) r.nextIdx = i;
+    if(isTodo(s)){
+      r.leftMin += e.rt - pm;
+      var lm = lockedMin(e, rec, now); if(lm){ r.lockedMin += lm; r.unlockAt = Math.max(r.unlockAt, e.air[e.ep-1]); }
+    }
+    var waiting = isWaiting(e, rec, now);   // caught up on a show that's still airing → not "current"
+    if(waiting && isTodo(s) && r.waitIdx == null) r.waitIdx = i;
+    if(s === "watching" && !waiting && r.watchingIdx < 0) r.watchingIdx = i;
+    if(s === "unwatched" && !waiting && r.nextIdx < 0) r.nextIdx = i;
     if(s === "planned" && r.plannedIdx < 0) r.plannedIdx = i;
   });
   if(r.nextIdx < 0) r.nextIdx = r.plannedIdx;
   r.pct = r.den ? (r.done === r.den ? 100 : Math.floor(r.done/r.den*100)) : 0;
   r.cur = r.watchingIdx >= 0 ? r.watchingIdx : r.nextIdx;
+  if(r.cur < 0 && r.waitIdx != null) r.cur = r.waitIdx;   // only a locked show left → show it with its unlock time
   r.complete = r.den > 0 && r.done === r.den;
+  r.readyMin = Math.max(0, r.leftMin - r.lockedMin);
+  r.airSig = ENTRIES.filter(function(e){ return e.air; }).map(function(e){ return airedCount(e, now); }).join(",");
   return r;
 }
 function fmtRt(m){ m = Math.round(m); var h = Math.floor(m/60), mm = m%60; return h ? h + "h\u00a0" + (mm<10?"0":"") + mm + "m" : mm + "m"; }
@@ -1610,8 +1731,36 @@ function buildTimeline(){
       '<div class="era-stick" aria-hidden="true"><div><span class="n">' + String(ei+1).padStart(2,"0") + '</span><span class="nm">' + esc(era.name) + '</span><span class="c"></span><span class="mb"><i></i></span></div></div>' +
       '<ul class="list">' + rows + '</ul></section>';
   });
+  html += laterHTML();
   html += '<p class="empty" id="empty" hidden>Nothing matches this filter.</p>';
   tl.innerHTML = html;
+}
+/* Coming later — built once, read-only, outside ERAS so it can never count */
+function laterSorted(){ return LATER.slice().sort(function(a,b){ return laterKey(a) - laterKey(b); }); }
+function laterCountdown(x){
+  if(!x.d) return "";
+  var days = dayNum(new Date(x.d[0], x.d[1]-1, x.d[2])) - dayNum();
+  return days > 1 ? "in " + days + " days" : days === 1 ? "tomorrow" : days === 0 ? "today" : "out now";
+}
+function laterHTML(){
+  var rows = laterSorted().map(function(x){
+    return '<li class="lt" data-later="' + x.id + '"><span class="poster">' + posterHTML(x,"w185",null) + '</span>' +
+      '<span class="body"><span class="t">' + esc(x.title) + '</span><span class="m">' + esc(TYPE_LABEL[x.type]) + '</span>' +
+      (x.note ? '<span class="note">' + esc(x.note) + '</span>' : "") + '</span>' +
+      '<span class="end"><span class="when">' + esc(x.when) + '</span><span class="conf ' + x.c + '">' + CONF_LABEL[x.c] + '</span><span class="cd2"></span></span></li>';
+  }).join("");
+  return '<section class="later rv" id="later" aria-label="Coming later">' +
+    '<div class="era-head"><span class="era-no">+</span>' +
+    '<span class="era-tag"><i class="sw" style="background:var(--accent-2)"></i>Announced · not counted</span>' +
+    '<span class="era-name">Coming later</span>' +
+    '<span class="era-count"><b>' + LATER.length + '</b></span></div>' +
+    '<ul class="later-list">' + rows + '</ul>' +
+    '<p class="later-foot">After Doomsday. These never count toward progress or hours. Confirmed = official date · Year only = Marvel gave a year/window · Reported = from trades, not official.</p></section>';
+}
+function updateLater(){
+  var sec = $("later"); if(!sec) return;
+  sec.hidden = !(filter === "all" || filter === "side");
+  LATER.forEach(function(x){ var el = sec.querySelector('[data-later="' + x.id + '"] .cd2'); if(el) el.textContent = laterCountdown(x); });
 }
 function passes(s){
   if(filter === "all") return true;
@@ -1621,15 +1770,23 @@ function passes(s){
   return true;
 }
 function starsText(v){ return v > 0 ? "★" + v : ""; }
+function fmtAir(t){
+  try{ return new Date(t).toLocaleString(undefined,{weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit", hourCycle:"h23"}); }
+  catch(_){ return new Date(t).toLocaleString(); }
+}
+function epRange(a, b){ return a === b ? "Ep " + a : "Ep " + a + "–" + b; }
+function lockText(e){ var nd = nextDrop(e); return nd ? "🔒 " + epRange(nd.from, nd.to) + " airs " + fmtAir(nd.t) : ""; }
+function lockToast(e){ var nd = nextDrop(e); return nd ? e.title + " · " + epRange(nd.from, nd.to) + " isn't out yet — airs " + fmtAir(nd.t) : e.title; }
 function updateRow(e, r){
   var li = tl.querySelector('.row[data-id="' + e.id + '"]'); if(!li) return;
   var rec = S.e[e.id], s = rec.s;
-  li.className = "row s-" + s + (li.classList.contains("logged") ? " logged" : "");
+  var waiting = isWaiting(e, rec), lk = isAiring(e) && s !== "watched" && s !== "optional" && s !== "future" ? lockText(e) : "";
+  li.className = "row s-" + s + (waiting ? " s-waiting" : "") + (li.classList.contains("logged") ? " logged" : "");
   li.hidden = !passes(s);
   li.querySelector(".m").textContent = metaLine(e);
-  var note = li.querySelector(".note"), showNote = e.note && s === e.s;
-  note.textContent = showNote ? e.note : ""; note.hidden = !showNote;
-  li.querySelector(".pill").textContent = LABEL[s];
+  var note = li.querySelector(".note"), showNote = !!(lk || (e.note && s === e.s));
+  note.textContent = lk || (showNote ? e.note : ""); note.hidden = !showNote; note.classList.toggle("lock", !!lk);
+  li.querySelector(".pill").textContent = waiting ? "Caught up" : LABEL[s];
   var sm = li.querySelector(".stars-mini"); sm.textContent = s === "watched" ? starsText(rec.r) : ""; sm.hidden = !sm.textContent;
   var re = li.querySelector(".row-ep"), n = rec.ep || 0;
   if(e.ep && n > 0 && s !== "watched"){ re.hidden = false; re.querySelector("i").style.width = (n/e.ep*100) + "%"; re.lastChild.textContent = "Ep " + n + "/" + e.ep; } else re.hidden = true;
@@ -1639,8 +1796,8 @@ function updateRow(e, r){
   else tag.hidden = true;
   li.querySelector(".node").setAttribute("aria-label", s === "watched" ? "Mark “" + e.title + "” as not watched" : "Mark “" + e.title + "” as watched");
   li.querySelector(".open").setAttribute("aria-label", e.title + ", " + LABEL[s] + ". Open details.");
-  li.querySelector(".swipe-bg .l").textContent = s === "watched" ? "↺ Not yet" : "✓ Watched";
-  li.querySelector(".swipe-bg .r").textContent = (e.ep && s === "watching") ? "+1 ep" : (s === "watching" ? "Watching" : "▶ Start");
+  li.querySelector(".swipe-bg .l").textContent = s === "watched" ? "↺ Not yet" : (isAiring(e) ? "🔒 Not out" : "✓ Watched");
+  li.querySelector(".swipe-bg .r").textContent = waiting ? "🔒 Not out" : (e.ep && s === "watching") ? "+1 ep" : (s === "watching" ? "Watching" : "▶ Start");
 }
 var lastR = null;
 function updateAll(){
@@ -1660,7 +1817,8 @@ function updateAll(){
     if(er.den && er.done === er.den) b += '<span class="badge sec">Secured</span>';
     sec.querySelector(".badges").innerHTML = b;
   });
-  $("empty").hidden = anyVisible;
+  updateLater();
+  $("empty").hidden = anyVisible || filter === "side";
   lastR = r;
   renderHero(r);
   applyTheme(themeFor(r), true);
@@ -1708,13 +1866,17 @@ function renderHero(r){
     post.removeAttribute("data-p"); post.dataset.id = ""; post.innerHTML = '<span class="gen"><span class="gt">TVA · Case closed</span><span class="gf">Jayden-616</span></span>';
     paintBackdrop(null);
   } else {
-    var rec = S.e[e.id], watching = rec.s === "watching";
-    $("nowLab").textContent = watching ? "Currently watching" : "Up next";
+    var rec = S.e[e.id], watching = rec.s === "watching", airing = isAiring(e), waiting = isWaiting(e, rec);
+    $("nowLab").textContent = waiting ? "Caught up · waiting" : watching ? "Currently watching" : "Up next";
     $("nowTitle").textContent = e.title;
-    $("nowMeta").innerHTML = esc(ERAS[e.era].name) + "<br>" + esc(metaLine(e));
-    prim.textContent = watching ? "Mark watched" : "Start watching"; prim.dataset.act = watching ? "done" : "start"; prim.dataset.id = e.id;
+    $("nowMeta").innerHTML = esc(ERAS[e.era].name) + "<br>" + esc(metaLine(e)) + (airing ? '<br><span style="color:var(--accent)">' + esc(lockText(e)) + "</span>" : "");
+    prim.disabled = false;
+    if(waiting){ var nd = nextDrop(e); prim.textContent = "🔒 " + epRange(nd.from, nd.to) + " · " + fmtAir(nd.t); prim.dataset.act = ""; prim.disabled = true; }
+    else if(airing && watching){ prim.textContent = "+1 episode"; prim.dataset.act = "ep"; }
+    else { prim.textContent = watching ? "Mark watched" : "Start watching"; prim.dataset.act = watching ? "done" : "start"; }
+    prim.dataset.id = e.id;
     var n = rec.ep || 0;
-    epBtn.hidden = !(e.ep && watching); epBtn.dataset.id = e.id;
+    epBtn.hidden = !(e.ep && watching && !airing); epBtn.dataset.id = e.id;
     if(e.ep && n > 0){ epBox.hidden = false; epBox.querySelector("i").style.width = (n/e.ep*100) + "%"; epBox.querySelector(".lbl").textContent = "Episode " + n + " of " + e.ep + " · " + fmtRt(e.rt - progressMin(e,rec)) + " left"; } else epBox.hidden = true;
     dp.hidden = false; dp.href = dplusUrl(e); dp.setAttribute("aria-label", "Open " + e.title + " in Disney+");
     $("nowJump").hidden = false; $("nowJump").dataset.id = e.id; $("nowDetails").hidden = false; $("nowDetails").dataset.id = e.id;
@@ -1763,14 +1925,17 @@ function renderDeadline(full){
   // the rest only changes when progress changes or once a minute
   if(!full && Date.now() - noteStamp < 60000) return;
   noteStamp = Date.now();
-  var hw = r.wMin/60, hl = r.leftMin/60;
+  var hw = r.wMin/60, hl = r.leftMin/60, hr = r.readyMin/60, hk = r.lockedMin/60;
+  function hfmt(x){ return x < 10 ? x.toFixed(1) : String(Math.round(x)); }
   setHTML("hWatched", Math.round(hw) + "<small>h</small>");
-  setHTML("hLeft", (hl < 10 ? hl.toFixed(1) : Math.round(hl)) + "<small>h</small>");
+  // v7: "watchable now" vs "locked" (episodes that haven't aired yet)
+  setHTML("hLeft", hfmt(hk > 0 ? hr : hl) + "<small>h</small>");
+  setHTML("hLeftLab", hk > 0 ? "watchable now<small>+" + hfmt(hk) + "h locked till " + esc(new Date(r.unlockAt).toLocaleDateString(undefined,{day:"numeric",month:"short"})) + "</small>" : "hours left");
   if(ms <= 0){ setHTML("hPace","—"); setHTML("ddNote","<b>" + esc(APP.deadlineTitle) + " is here.</b> " + (hl > 0 ? Math.round(hl) + " hours still on the list — no judgment." : "You made it in time.")); setText("miniCd",""); return; }
   var ev = Math.max(1, eveningsLeft(now)), need = hl/ev, mins = Math.round(need*60);
   setHTML("hPace", hl === 0 ? "0" : (need < 1 ? mins + "<small>min</small>" : need.toFixed(1) + "<small>h</small>"));
   if(hl === 0){ setHTML("ddNote", '<span class="ok">✓</span> <b>Everything before ' + esc(APP.deadlineTitle) + ' is done.</b>'); return; }
-  var txt = "<b>" + ev + " evenings</b> left — about " + (mins >= 90 ? "a movie" : mins >= 40 ? "an episode or two" : "one episode") + " a night gets you there.";
+  var txt = "<b>" + ev + " evenings</b> left for <b>" + hfmt(hl) + "h</b> — about " + (mins >= 90 ? "a movie" : mins >= 40 ? "an episode or two" : "one episode") + " a night gets you there.";
   var recent = recentPace();
   if(recent > 0){
     var finish = new Date(now.getTime() + hl/recent*864e5);
@@ -1780,6 +1945,10 @@ function renderDeadline(full){
   setHTML("ddNote", txt);
 }
 setInterval(function(){ if(!document.hidden && !$("view-timeline").hidden) renderDeadline(false); }, 1000);
+/* v7: when a locked episode airs, unlock it without a reload */
+function airCheck(){ if(!lastR) return; var sig = ENTRIES.filter(function(e){ return e.air; }).map(function(e){ return airedCount(e); }).join(",");
+  if(sig !== lastR.airSig){ anchored(updateAll); var e = ENTRIES.filter(function(x){ return x.air; })[0]; if(e && !document.hidden) toast("New episode out · " + e.title, false); } }
+setInterval(function(){ if(!document.hidden) airCheck(); }, 30000);
 
 /* =====================================================================
    ACTIONS (with Undo + era-secured moment)
@@ -1816,11 +1985,13 @@ function doUndo(){
 }
 function toggleWatched(id){
   var s = S.e[id].s, e = BY_ID[id];
+  if(s !== "watched" && isAiring(e)){ haptic(); toast(lockToast(e), false); return; }
   act(id, function(){ return applyStatus(S, id, s === "watched" ? "unwatched" : "watched"); },
       {label: s === "watched" ? e.title + " · back to Not yet" : "Logged · " + e.title + " · +" + fmtRt(e.rt - progressMin(e, S.e[id]))});
 }
 function leftAction(id){
   var e = BY_ID[id], rec = S.e[id];
+  if(e.ep && rec.s === "watching" && isWaiting(e, rec)){ haptic(); toast(lockToast(e), false); return; }
   if(e.ep && rec.s === "watching"){ var n = epsDone(e, rec) + 1; act(id, function(){ return applyEp(S, id, n); }, {tick:true, label: n >= e.ep ? "Logged · " + e.title : e.title + " · Episode " + n + " of " + e.ep}); }
   else if(rec.s !== "watching") act(id, function(){ return applyStatus(S, id, "watching"); }, {tick:true, label:"Watching · " + e.title});
 }
@@ -1904,6 +2075,7 @@ tl.addEventListener("pointercancel", function(ev){ endSwipe(ev, true); });
 $("nowPrimary").addEventListener("click", function(){
   var a = this.dataset.act, id = this.dataset.id;
   if(a === "done") toggleWatched(id);
+  else if(a === "ep") leftAction(id);
   else if(a === "start") act(id, function(){ return applyStatus(S, id, "watching"); }, {tick:true, label:"Watching · " + BY_ID[id].title});
   else if(a === "wrapped") go("stats", "sWrapped");
 });
@@ -2034,13 +2206,28 @@ function renderDetail(id){
     return '<button data-st="' + s + '" aria-pressed="' + (rec.s === s) + '">' + LABEL[s] + '</button>'; }).join("") + '</div>';
   if(e.ep){
     h += '<h3>Episodes</h3><div class="stepper"><button data-ep="-1" aria-label="One episode less">−</button><div class="mid"><b>' + n + ' / ' + e.ep + '</b><span>' +
-      (n >= e.ep ? "All watched" : fmtRt(e.rt - progressMin(e,rec)) + " left") + '</span><div class="bar"><i style="width:' + (n/e.ep*100) + '%"></i></div></div><button data-ep="1" aria-label="One more episode">+</button></div>';
+      (n >= e.ep ? "All watched" : fmtRt(e.rt - progressMin(e,rec)) + " left") + '</span><div class="bar"><i style="width:' + (n/e.ep*100) + '%"></i></div></div><button data-ep="1" aria-label="One more episode"' + (isWaiting(e, rec) ? " disabled" : "") + '>+</button></div>';
+    if(e.et){ // per-episode list with titles, runtimes and air times
+      var aired = airedCount(e);
+      h += '<ol class="eps" style="margin-top:12px">' + e.et.map(function(tt, i){
+        var k = i + 1, done = k <= n, lk = k > aired;
+        return '<li class="' + (done ? "done" : lk ? "lk" : "") + '"><span class="n">' + String(k).padStart(2,"0") + '</span><span class="tt">' + esc(tt) +
+          '<small>' + (e.ert ? e.ert[i] + " min" : "") + (e.air ? " · " + esc(fmtAir(e.air[i])) : "") + '</small></span>' +
+          '<span class="st">' + (done ? "✓ Watched" : lk ? "🔒 Not out" : "Ready") + '</span></li>';
+      }).join("") + '</ol>';
+      if(e.ert) h += '<p class="fine" style="margin-top:8px">Runtimes are reported estimates. Times are shown in this device\'s time zone.</p>';
+    }
   }
   if(rec.s === "watched"){
     h += '<h3>Your rating</h3><div class="stars">';
     for(var k=1;k<=5;k++) h += '<button class="s' + (rec.r >= k ? " on" : "") + '" data-rate="' + k + '" aria-label="' + k + ' star' + (k>1?"s":"") + '">' + STAR + '</button>';
     h += '<button class="chip" data-rate="-1" aria-pressed="' + (rec.r === -1) + '">Don\'t remember</button></div>';
     h += '<h3>Watched on</h3>' + (rec.d != null ? '<input type="date" class="date-inp" id="detDate" value="' + isoDay(rec.d) + '" max="' + isoDay(dayNum()) + '">' : '<p>Logged before dates were tracked. <button class="linkish" id="detDateSet">Set a date</button></p>');
+  }
+  var ex = EXTRA[id];
+  if(ex){
+    h += '<h3>' + esc(ex.h) + '</h3><div class="box"><p>' + esc(ex.lead) + '</p><details class="spoil"><summary>What the new scenes add (spoilers)</summary><ul>' +
+      ex.spoil.map(function(x){ return "<li>" + esc(x) + "</li>"; }).join("") + '</ul></details></div>';
   }
   if(ins){
     h += '<h3>Inspired by</h3><div class="comic" style="--era-accent:' + THEMES[e.th].c[8] + '">' + panelHTML(ins[1] ? COVER[ins[1]] : null) +
@@ -2054,6 +2241,8 @@ $("detBody").addEventListener("click", function(ev){
   var id = detId; if(!id) return;
   var t = ev.target.closest("button"); if(!t) return;
   var e = BY_ID[id];
+  if(t.dataset.st === "watched" && isAiring(e) && S.e[id].s !== "watched"){ haptic(); toast(lockToast(e), false); return; }
+  if(t.dataset.ep === "1" && isWaiting(e, S.e[id])){ haptic(); toast(lockToast(e), false); return; }
   if(t.dataset.st){ var s = t.dataset.st; act(id, function(){ return applyStatus(S, id, s); }, {tick:true, label:e.title + " · " + LABEL[s]}); }
   else if(t.dataset.ep){ var n = epsDone(e, S.e[id]) + (+t.dataset.ep); act(id, function(){ return applyEp(S, id, n); }, {tick:true, label: n >= e.ep ? "Logged · " + e.title : e.title + " · Episode " + Math.max(0,n) + " of " + e.ep}); }
   else if(t.dataset.rate){ var v = +t.dataset.rate; if(S.e[id].r === v) v = 0; act(id, function(){ applyRating(S, id, v); }, {tick:true, silent:true}); }
@@ -2247,7 +2436,7 @@ $("ghNow").addEventListener("click", function(){ syncNow(); });
 $("ghOff").addEventListener("click", function(){ lsDel(K_GH); lsDel(K_GIST); Sync.token = ""; Sync.gist = ""; $("syncChoice").hidden = true; setSyncState("idle"); ghMsg("This device is disconnected. Your progress stays here.", "ok"); });
 document.addEventListener("visibilitychange", function(){
   if(document.hidden){ if(Sync.pending){ clearTimeout(Sync.timer); syncNow(); } }
-  else { renderDeadline(true); if(Sync.token && Sync.gist && Date.now() - Sync.last > 20000) syncNow(); }
+  else { airCheck(); updateLater(); renderDeadline(true); if(Sync.token && Sync.gist && Date.now() - Sync.last > 20000) syncNow(); }
 });
 addEventListener("online", function(){ if(Sync.token && Sync.gist) syncNow(); });
 
@@ -2409,6 +2598,7 @@ $("toastBtn").addEventListener("click", function(){ $("toast").classList.remove(
 /* =====================================================================
    SELF-TEST (#selftest) — runs on copies, never touches saved progress
    ===================================================================== */
+var SAMPLE_V6 = "ST3:eyJ2Ijo2LCJlIjp7ImVvdyI6eyJzIjoid2F0Y2hlZCIsInIiOjR9LCJjYWZhIjp7InMiOiJ3YXRjaGVkIiwiciI6NH0sIm9zYWMiOnsicyI6IndhdGNoZWQiLCJyIjoyfSwiY20iOnsicyI6IndhdGNoZWQiLCJyIjozfSwiaW0xIjp7InMiOiJ3YXRjaGVkIiwiciI6NH0sImltMiI6eyJzIjoid2F0Y2hlZCIsInIiOjR9LCJpaCI6eyJzIjoid2F0Y2hlZCIsInIiOjR9LCJvc2Z0Ijp7InMiOiJ3YXRjaGVkIiwiciI6Mn0sInRoMSI6eyJzIjoid2F0Y2hlZCIsInIiOjJ9LCJvc2NvIjp7InMiOiJ3YXRjaGVkIiwiciI6Mn0sImF2MSI6eyJzIjoid2F0Y2hlZCIsInIiOjV9LCJvczQ3Ijp7InMiOiJ3YXRjaGVkIiwiciI6Mn0sInRoMiI6eyJzIjoid2F0Y2hlZCIsInIiOjF9LCJpbTMiOnsicyI6IndhdGNoZWQiLCJyIjo1fSwib3NhaCI6eyJzIjoid2F0Y2hlZCIsInIiOjJ9LCJjYXdzIjp7InMiOiJ3YXRjaGVkIiwiciI6NX0sImdnMSI6eyJzIjoid2F0Y2hlZCIsInIiOjR9LCJnZzIiOnsicyI6IndhdGNoZWQiLCJyIjo0fSwiZ3J0MSI6eyJzIjoib3B0aW9uYWwifSwiZ3J0MiI6eyJzIjoib3B0aW9uYWwifSwiZGQxIjp7InMiOiJ3YXRjaGVkIiwiciI6NX0sImpqMSI6eyJzIjoid2F0Y2hlZCIsInIiOjV9LCJhdjIiOnsicyI6IndhdGNoZWQiLCJyIjo0fSwiYW0xIjp7InMiOiJ3YXRjaGVkIiwiciI6NX0sImRkMiI6eyJzIjoid2F0Y2hlZCIsInIiOjV9LCJsYzEiOnsicyI6IndhdGNoZWQiLCJyIjo0fSwiaWYxIjp7InMiOiJ3YXRjaGVkIiwiciI6M30sImRlZiI6eyJzIjoid2F0Y2hlZCIsInIiOjR9LCJjYWN3Ijp7InMiOiJ3YXRjaGVkIiwiciI6NX0sImJ3Ijp7InMiOiJ3YXRjaGVkIiwiciI6NH0sImJwMSI6eyJzIjoid2F0Y2hlZCIsInIiOjV9LCJzbTEiOnsicyI6IndhdGNoZWQiLCJyIjo0fSwicHVuMSI6eyJzIjoid2F0Y2hlZCIsInIiOjV9LCJkczEiOnsicyI6IndhdGNoZWQiLCJyIjozfSwiamoyIjp7InMiOiJ3YXRjaGVkIiwiciI6M30sImxjMiI6eyJzIjoid2F0Y2hlZCIsInIiOjN9LCJpZjIiOnsicyI6IndhdGNoZWQiLCJyIjo0fSwiZGQzIjp7InMiOiJ3YXRjaGVkIiwiciI6NX0sInRoMyI6eyJzIjoid2F0Y2hlZCIsInIiOjR9LCJwdW4yIjp7InMiOiJ3YXRjaGVkIiwiciI6NX0sImpqMyI6eyJzIjoid2F0Y2hlZCIsInIiOjV9LCJhbTIiOnsicyI6IndhdGNoZWQiLCJyIjo0fSwiYXYzIjp7InMiOiJ3YXRjaGVkIiwiciI6NX0sImF2NCI6eyJzIjoid2F0Y2hlZCIsInIiOjV9LCJsazEiOnsicyI6IndhdGNoZWQiLCJyIjo1fSwid2kxIjp7InMiOiJ3YXRjaGVkIiwiciI6M30sIm16Ijp7InMiOiJ3YXRjaGVkIiwiciI6M30sInd2Ijp7InMiOiJ3YXRjaGluZyIsImV2IjpbWzI0OTAsMSwzOV0sWzI0OTAsMiwzOV0sWzI0OTAsMywzOV0sWzI0OTAsNCwzOV0sWzI0OTAsNSwzOV0sWzI0OTAsNiwzOV1dLCJlcCI6Nn0sInNjIjp7InMiOiJ3YXRjaGVkIiwiciI6NX0sImZ3cyI6eyJzIjoidW53YXRjaGVkIn0sInNtMiI6eyJzIjoidW53YXRjaGVkIn0sImV0Ijp7InMiOiJ1bndhdGNoZWQifSwic20zIjp7InMiOiJ1bndhdGNoZWQifSwiZHMyIjp7InMiOiJ1bndhdGNoZWQifSwiaGsiOnsicyI6InVud2F0Y2hlZCJ9LCJtayI6eyJzIjoidW53YXRjaGVkIn0sImJwMiI6eyJzIjoidW53YXRjaGVkIn0sImVjaCI6eyJzIjoidW53YXRjaGVkIn0sInNoIjp7InMiOiJ1bndhdGNoZWQifSwibXNtIjp7InMiOiJ1bndhdGNoZWQifSwidGg0Ijp7InMiOiJ1bndhdGNoZWQifSwiaXJoIjp7InMiOiJ1bndhdGNoZWQifSwid2JuIjp7InMiOiJ1bndhdGNoZWQifSwiZ2hzIjp7InMiOiJ1bndhdGNoZWQifSwiYW0zIjp7InMiOiJ1bndhdGNoZWQifSwiZ2czIjp7InMiOiJ1bndhdGNoZWQifSwic2kiOnsicyI6InVud2F0Y2hlZCJ9LCJtYXIiOnsicyI6InVud2F0Y2hlZCJ9LCJsazIiOnsicyI6IndhdGNoZWQiLCJkIjoyNDY3LCJyIjo1LCJldiI6W1syNDU4LDEsNTFdLFsyNDU4LDIsNTFdLFsyNDU4LDMsNTFdLFsyNDU4LDQsNTFdLFsyNDY2LDUsNTFdLFsyNDY3LDYsNTFdLFsyNDY3LDAsMF1dfSwid2kyIjp7InMiOiJ1bndhdGNoZWQifSwiZHB3Ijp7InMiOiJ1bndhdGNoZWQifSwiYWdhIjp7InMiOiJ1bndhdGNoZWQifSwid2kzIjp7InMiOiJ1bndhdGNoZWQifSwiZGJhMSI6eyJzIjoid2F0Y2hlZCIsInIiOjN9LCJjYTQiOnsicyI6InVud2F0Y2hlZCJ9LCJ0YiI6eyJzIjoidW53YXRjaGVkIn0sImZmIjp7InMiOiJ1bndhdGNoZWQifSwid20iOnsicyI6InVud2F0Y2hlZCJ9LCJkYmEyIjp7InMiOiJ3YXRjaGVkIiwiciI6NX0sInBvbHMiOnsicyI6IndhdGNoZWQiLCJyIjozfSwic200Ijp7InMiOiJ3YXRjaGVkIiwiciI6NX0sImF2NSI6eyJzIjoiZnV0dXJlIn0sImF2NiI6eyJzIjoiZnV0dXJlIn19fQ~9hw973"; // Jayden's real code from 26 Oct 2026 (v6, before VisionQuest)
 function runSelfTest(){
   var out = [], T = function(name, fn){ var ok = false, note = ""; try{ var r = fn(); ok = r === true; if(r !== true && r) note = String(r); }catch(e){ note = e.message; } out.push({name:name, ok:ok, note:note}); };
   var LET = "wwwwwwwwwwwwwwwwwwoowwwwwwwwwwwwwwwwwwwwwwwwwwwuwuuuuuuuuuuuuuuuuuuucuuuuwuuuuwwwff";
@@ -2428,6 +2618,24 @@ function runSelfTest(){
   T("Sync merge: newest change per entry wins", function(){ var a = freshState(), b = freshState(); a.e.im1 = {s:"watched", u:100, d:1}; b.e.im1 = {s:"unwatched", u:200}; a.e.av1 = {s:"watched", u:300, d:2}; b.e.av1 = {s:"watching", u:50};
     var m = mergeStates(a, b); return m.state.e.im1.s === "unwatched" && m.state.e.av1.s === "watched" && m.localChanged === 1 && m.pushNeeded === 1; });
   T("Undo snapshot restores an entry exactly", function(){ var a = freshState(); applyStatus(a, "th3", "watched", 2400); var before = clone(a.e.th3); applyStatus(a, "th3", "watching"); a.e.th3 = before; return a.e.th3.s === "watched" && a.e.th3.d === 2400; });
+  /* ---- v7 ---- */
+  var OCT26 = Date.UTC(2026,9,26,12), NOV12 = Date.UTC(2026,10,12,12);
+  T("v7 · VisionQuest sits after Brand New Day, before Doomsday", function(){ var v = BY_ID.vq; return !!v && ENTRIES[v.idx-1].id === "sm4" && ENTRIES[v.idx+1].id === "av5"; });
+  T("v7 · VisionQuest: 8 episodes, titles, runtimes add up", function(){ var v = BY_ID.vq; return v.ep === 8 && v.et.length === 8 && v.ert.reduce(function(a,b){ return a+b; },0) === v.rt && v.air.every(function(t,i){ return !i || t >= v.air[i-1]; }); });
+  T("v7 · Air times in Swiss time: Ep 5 02:00, Ep 7 03:00, finale 11 Nov", function(){
+    var f = function(t, o){ return new Date(t).toLocaleString("en-GB", Object.assign({timeZone:"Europe/Zurich"}, o)); }, A = BY_ID.vq.air, hm = {hour:"2-digit",minute:"2-digit",hourCycle:"h23"};
+    return f(A[4],hm) === "02:00" && f(A[6],hm) === "03:00" && f(A[7],{day:"numeric",month:"short"}) === "11 Nov" || [f(A[4],hm), f(A[6],hm), f(A[7],{day:"numeric",month:"short"})].join(" / "); });
+  T("v7 · On 26 Oct only Ep 1–4 can be logged", function(){ var a = freshState(); applyEp(a, "vq", 8, 2490, OCT26); return airedCount(BY_ID.vq, OCT26) === 4 && a.e.vq.ep === 4 && a.e.vq.s === "watching" && applyStatus(a, "vq", "watched", 2490, OCT26) === false; });
+  T("v7 · After the finale airs, all 8 log and it's Watched", function(){ var a = freshState(); applyEp(a, "vq", 8, 2507, NOV12); return a.e.vq.s === "watched" && a.e.vq.ev.length === 9; });
+  T("v7 · Caught-up VisionQuest isn't “current”", function(){ var a = freshState(); applyEp(a, "vq", 4, 2490, OCT26); var r = compute(a, OCT26); return isWaiting(BY_ID.vq, a.e.vq, OCT26) && r.cur !== BY_ID.vq.idx; });
+  T("v7 · Hours: watchable + locked = left (locked = Ep 5–8)", function(){ var a = freshState(), r = compute(a, OCT26), v = BY_ID.vq; var want = v.ert[4]+v.ert[5]+v.ert[6]+v.ert[7];
+    return r.lockedMin === want && r.readyMin + r.lockedMin === r.leftMin && compute(a, NOV12).lockedMin === 0 || "locked " + r.lockedMin + " / want " + want; });
+  T("v7 · Coming later never counts toward progress or hours", function(){ var a = freshState(); var bad = LATER.filter(function(x){ return BY_ID[x.id] || a.e[x.id]; }); var r = compute(a);
+    return !bad.length && r.den === ENTRIES.filter(function(e){ return isCounted(e.s); }).length && LATER.length === 11 || "clash: " + bad.map(function(x){ return x.id; }).join(","); });
+  T("v7 · A v6 code without VisionQuest still imports", function(){ var body = b64enc(JSON.stringify({v:6, e:{im1:{s:"watched", r:4}, wv:{s:"watching", ep:6}}})); var r = parseCode("ST3:" + body + "~" + hash(body), freshState());
+    return r.ok && r.state.e.im1.s === "watched" && r.state.e.wv.ep === 6 && r.state.e.vq.s === "unwatched"; });
+  T("v7 · Your Oct 26 progress code imports (WandaVision 6/9)", function(){ var r = parseCode(SAMPLE_V6, freshState()); if(!r.ok) return r.err; var e = r.state.e;
+    return e.wv.s === "watching" && e.wv.ep === 6 && e.lk2.s === "watched" && e.sm4.s === "watched" && e.vq.s === "unwatched" && e.av5.s === "future" || "unexpected values"; });
   T("Theme contrast ≥ 4.5:1 for all text", function(){
     function L(h){ var c = [1,3,5].map(function(i){ var v = parseInt(h.substr(i,2),16)/255; return v <= .03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4); }); return .2126*c[0] + .7152*c[1] + .0722*c[2]; }
     function cr(a,b){ var x = L(a), y = L(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); }

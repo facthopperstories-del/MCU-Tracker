@@ -1,6 +1,6 @@
 /* Sacred Timeline — offline support.
    Put this file next to index.html. Bump VERSION if you change this file. */
-var VERSION = "st-v6-1";
+var VERSION = "st-v7-1";
 var SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", function(e){
